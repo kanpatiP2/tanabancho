@@ -306,6 +306,58 @@
                 <input type="text" id="pre-genre" placeholder="ジャンル" style="width: 100px; padding: 4px;">
                 <input type="text" id="pre-memo" placeholder="コメント" style="width: 130px; padding: 4px;">
             </div>
+
+            <!-- カメラ詳細設定 -->
+            <details style="width:100%; border-top:1px solid #ddd; padding-top:10px; margin-top:5px;">
+              <summary style="font-size:11px; color:#aaa; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+                <span>📷 カメラ詳細設定</span>
+                <span id="cam-settings-summary" style="font-size:10px; color:#bbb;">デフォルト</span>
+              </summary>
+              <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+
+                <!-- プリセット選択 -->
+                <div style="display:flex; gap:6px;">
+                  <button id="preset-btn-default" onclick="selectPreset('default')"
+                    style="flex:1; padding:7px 4px; font-size:11px; font-weight:bold; border-radius:6px; border:2px solid #1a1a2e; background:#1a1a2e; color:#fff; cursor:pointer; box-shadow:none;">
+                    デフォルト
+                  </button>
+                  <button id="preset-btn-fast" onclick="selectPreset('fast')"
+                    style="flex:1; padding:7px 4px; font-size:11px; font-weight:bold; border-radius:6px; border:2px solid #ddd; background:#fff; color:#555; cursor:pointer; box-shadow:none;">
+                    読取最優先
+                  </button>
+                  <button id="preset-btn-custom" onclick="selectPreset('custom')"
+                    style="flex:1; padding:7px 4px; font-size:11px; font-weight:bold; border-radius:6px; border:2px solid #ddd; background:#fff; color:#555; cursor:pointer; box-shadow:none;">
+                    カスタム
+                  </button>
+                </div>
+
+                <!-- プリセット説明 -->
+                <div id="preset-desc" style="font-size:11px; color:#666; background:#f8f9fa; border-radius:6px; padding:8px 10px; line-height:1.7;">
+                  FPS: 5 / AF: 指定なし（html5-qrcodeのデフォルト値）
+                </div>
+
+                <!-- カスタム時のみ表示 -->
+                <div id="custom-controls" style="display:none; flex-direction:column; gap:8px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <label style="font-weight:bold; color:#555; font-size:12px;">FPS</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <input type="range" id="setting-fps" min="3" max="30" step="1" value="10" style="width:100px;" oninput="onCustomChange()">
+                      <span id="label-fps" style="min-width:28px; text-align:right; font-weight:bold; font-size:13px;">10</span>
+                    </div>
+                  </div>
+                  <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <label style="font-weight:bold; color:#555; font-size:12px;">オートフォーカス</label>
+                    <select id="setting-focus" onchange="onCustomChange()" style="font-size:12px; padding:4px 6px;">
+                      <option value="continuous">continuous</option>
+                      <option value="auto">auto</option>
+                      <option value="none">指定なし</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button onclick="applyCamSettings()" style="background:#1a1a2e; color:#fff; border:none; border-radius:6px; padding:8px; font-size:13px; font-weight:bold; cursor:pointer; width:100%;">設定を適用（カメラ再起動）</button>
+              </div>
+            </details>
         </div>
     </div>
 
@@ -1439,6 +1491,70 @@
         }
     }
 
+    const CAM_PRESETS = {
+        default: { fps: 5,  focusVal: 'none',      label: 'デフォルト',  desc: 'FPS: 5 / AF: 指定なし（html5-qrcodeのデフォルト値）' },
+        fast:    { fps: 10, focusVal: 'continuous', label: '読取最優先', desc: 'FPS: 10 / AF: continuous（ピンボケ改善・読取速度アップ）' },
+        custom:  { fps: 10, focusVal: 'continuous', label: 'カスタム',   desc: '' }
+    };
+    let currentPreset = 'default';
+
+    function selectPreset(preset) {
+        currentPreset = preset;
+        ['default','fast','custom'].forEach(p => {
+            const btn = document.getElementById('preset-btn-' + p);
+            if (!btn) return;
+            const active = p === preset;
+            btn.style.background = active ? '#1a1a2e' : '#fff';
+            btn.style.color = active ? '#fff' : '#555';
+            btn.style.borderColor = active ? '#1a1a2e' : '#ddd';
+        });
+        const customEl = document.getElementById('custom-controls');
+        if (customEl) customEl.style.display = preset === 'custom' ? 'flex' : 'none';
+        const descEl = document.getElementById('preset-desc');
+        if (descEl) {
+            if (preset !== 'custom') {
+                descEl.textContent = CAM_PRESETS[preset].desc;
+                descEl.style.display = 'block';
+            } else {
+                descEl.style.display = 'none';
+            }
+        }
+        if (preset !== 'custom') {
+            const fpsEl = document.getElementById('setting-fps');
+            const focusEl = document.getElementById('setting-focus');
+            if (fpsEl) { fpsEl.value = CAM_PRESETS[preset].fps; document.getElementById('label-fps').textContent = CAM_PRESETS[preset].fps; }
+            if (focusEl) focusEl.value = CAM_PRESETS[preset].focusVal;
+        }
+        updateCamSettingLabel();
+    }
+
+    function onCustomChange() {
+        const fps = document.getElementById('setting-fps').value;
+        document.getElementById('label-fps').textContent = fps;
+        updateCamSettingLabel();
+    }
+
+    function getCamSettings() {
+        const fps = parseInt(document.getElementById('setting-fps') ? document.getElementById('setting-fps').value : 5) || 5;
+        const focusVal = document.getElementById('setting-focus') ? document.getElementById('setting-focus').value : 'none';
+        return { fps, focusVal };
+    }
+
+    function updateCamSettingLabel() {
+        const el = document.getElementById('cam-settings-summary');
+        if (!el) return;
+        const label = currentPreset === 'custom'
+            ? `カスタム FPS:${document.getElementById('setting-fps').value} / AF:${document.getElementById('setting-focus').value}`
+            : CAM_PRESETS[currentPreset].label;
+        el.textContent = label;
+    }
+
+    function applyCamSettings() {
+        updateCamSettingLabel();
+        if (isCameraRunning) { forceStopCamera(); setTimeout(startCamera, 400); }
+        showToast('カメラ設定を適用しました', false);
+    }
+
     function startCamera() {
         if (html5QrCode && html5QrCode.isScanning) return;
         if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader", { formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.ITF ] }); }
@@ -1449,8 +1565,13 @@
         } else {
             qrboxFn = (w, h) => ({ width: w * 0.85, height: h * 0.4 });
         }
-        const config = { fps: 5, qrbox: qrboxFn, aspectRatio: 1.0 };
-        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+        const { fps, focusVal } = getCamSettings();
+        const videoConstraints = { facingMode: "environment" };
+        if (focusVal !== 'none') {
+            videoConstraints.advanced = [{ focusMode: focusVal }];
+        }
+        const config = { fps, qrbox: qrboxFn, aspectRatio: 1.0 };
+        html5QrCode.start(videoConstraints, config, onScanSuccess)
         .then(() => { isCameraRunning = true; document.getElementById("status").innerText = ""; })
         .catch(err => { document.getElementById("status").innerText = "起動エラー: " + err; });
     }

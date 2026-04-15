@@ -123,6 +123,59 @@
   </div>
   <div id="cam-status"></div>
 
+  <!-- カメラ詳細設定 -->
+  <div id="cam-settings-wrap" style="max-width:500px; margin: 0 auto 8px; padding: 0 10px;">
+    <details id="cam-settings-details" style="background:#fff; border:1px solid #ddd; border-radius:8px; padding:10px 14px; font-size:13px;">
+      <summary style="font-weight:bold; color:#444; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center;">
+        ⚙️ カメラ設定 <span style="font-size:11px; color:#888;" id="cam-settings-summary">デフォルト</span>
+      </summary>
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+
+        <!-- プリセット選択 -->
+        <div style="display:flex; gap:6px;">
+          <button id="preset-btn-default" onclick="selectPreset('default')"
+            style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border-radius:6px; border:2px solid #1a1a2e; background:#1a1a2e; color:#fff; cursor:pointer;">
+            デフォルト
+          </button>
+          <button id="preset-btn-fast" onclick="selectPreset('fast')"
+            style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border-radius:6px; border:2px solid #ddd; background:#fff; color:#555; cursor:pointer;">
+            読取最優先
+          </button>
+          <button id="preset-btn-custom" onclick="selectPreset('custom')"
+            style="flex:1; padding:8px 4px; font-size:12px; font-weight:bold; border-radius:6px; border:2px solid #ddd; background:#fff; color:#555; cursor:pointer;">
+            カスタム
+          </button>
+        </div>
+
+        <!-- プリセット説明 -->
+        <div id="preset-desc" style="font-size:11px; color:#666; background:#f8f9fa; border-radius:6px; padding:8px 10px; line-height:1.7;">
+          FPS: 5 / AF: 指定なし（html5-qrcodeのデフォルト値）
+        </div>
+
+        <!-- カスタム時のみ表示 -->
+        <div id="custom-controls" style="display:none; flex-direction:column; gap:8px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <label style="font-weight:bold; color:#555;">FPS</label>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="range" id="setting-fps" min="3" max="30" step="1" value="10" style="width:110px;" oninput="onCustomChange()">
+              <span id="label-fps" style="min-width:28px; text-align:right; font-weight:bold;">10</span>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <label style="font-weight:bold; color:#555;">オートフォーカス</label>
+            <select id="setting-focus" onchange="onCustomChange()" style="font-size:12px; padding:4px 6px;">
+              <option value="continuous">continuous</option>
+              <option value="auto">auto</option>
+              <option value="none">指定なし</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="applyCamSettings()" style="background:#1a1a2e; color:#fff; border:none; border-radius:6px; padding:8px; font-size:13px; font-weight:bold; cursor:pointer;">設定を適用（カメラ再起動）</button>
+      </div>
+    </details>
+  </div>
+
   <div class="manual-row">
     <input type="number" id="manual-input" placeholder="バーコード手入力">
     <button onclick="addManual()">追加</button>
@@ -253,6 +306,69 @@
   }
 
   // ===== カメラ =====
+  const CAM_PRESETS = {
+    default: { fps: 5,  focusVal: 'none',       label: 'デフォルト',  desc: 'FPS: 5 / AF: 指定なし（html5-qrcodeのデフォルト値）' },
+    fast:    { fps: 10, focusVal: 'continuous',  label: '読取最優先', desc: 'FPS: 10 / AF: continuous（ピンボケ改善・読取速度アップ）' },
+    custom:  { fps: 10, focusVal: 'continuous',  label: 'カスタム',   desc: '' }
+  };
+  let currentPreset = 'default';
+
+  function selectPreset(preset) {
+    currentPreset = preset;
+    // ボタンの見た目を切り替え
+    ['default','fast','custom'].forEach(p => {
+      const btn = document.getElementById('preset-btn-' + p);
+      const active = p === preset;
+      btn.style.background = active ? '#1a1a2e' : '#fff';
+      btn.style.color = active ? '#fff' : '#555';
+      btn.style.borderColor = active ? '#1a1a2e' : '#ddd';
+    });
+    // カスタムコントロールの表示
+    const customEl = document.getElementById('custom-controls');
+    customEl.style.display = preset === 'custom' ? 'flex' : 'none';
+    // 説明文
+    const descEl = document.getElementById('preset-desc');
+    if (preset !== 'custom') {
+      descEl.textContent = CAM_PRESETS[preset].desc;
+      descEl.style.display = 'block';
+    } else {
+      descEl.style.display = 'none';
+    }
+    // プリセット値をスライダー等に反映
+    if (preset !== 'custom') {
+      document.getElementById('setting-fps').value = CAM_PRESETS[preset].fps;
+      document.getElementById('label-fps').textContent = CAM_PRESETS[preset].fps;
+      document.getElementById('setting-focus').value = CAM_PRESETS[preset].focusVal;
+    }
+    updateCamSettingLabel();
+  }
+
+  function onCustomChange() {
+    const fps = document.getElementById('setting-fps').value;
+    document.getElementById('label-fps').textContent = fps;
+    updateCamSettingLabel();
+  }
+
+  function getCamSettings() {
+    const fps = parseInt(document.getElementById('setting-fps').value) || 5;
+    const focusVal = document.getElementById('setting-focus').value;
+    return { fps, focusVal };
+  }
+
+  function updateCamSettingLabel() {
+    const label = currentPreset === 'custom'
+      ? `カスタム FPS:${document.getElementById('setting-fps').value} / AF:${document.getElementById('setting-focus').value}`
+      : CAM_PRESETS[currentPreset].label;
+    document.getElementById('cam-settings-summary').textContent = label;
+  }
+
+  function applyCamSettings() {
+    updateCamSettingLabel();
+    if (isCameraRunning) { forceStop(); setTimeout(startCamera, 400); }
+    document.getElementById('cam-settings-details').removeAttribute('open');
+    showToast('カメラ設定を適用しました', false);
+  }
+
   function startCamera() {
     if (html5QrCode && html5QrCode.isScanning) return;
     if (!html5QrCode) {
@@ -263,10 +379,15 @@
     document.getElementById('cam-cover').style.display = 'none';
     document.getElementById('cam-status').innerText = 'カメラ起動中...';
     isProcessing = false;
+    const { fps, focusVal } = getCamSettings();
     const qrbox = isTallMode
       ? (w, h) => ({ width: w * 0.4, height: h * 0.85 })
       : (w, h) => ({ width: w * 0.85, height: h * 0.4 });
-    html5QrCode.start({ facingMode: 'environment' }, { fps: 5, qrbox, aspectRatio: 1.0 }, onScanSuccess)
+    const videoConstraints = { facingMode: 'environment' };
+    if (focusVal !== 'none') {
+      videoConstraints.advanced = [{ focusMode: focusVal }];
+    }
+    html5QrCode.start(videoConstraints, { fps, qrbox, aspectRatio: 1.0 }, onScanSuccess)
       .then(() => { isCameraRunning = true; document.getElementById('cam-status').innerText = ''; })
       .catch(err => { document.getElementById('cam-status').innerText = '起動エラー: ' + err; });
   }
