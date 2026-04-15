@@ -145,7 +145,14 @@
       <div class="send-desc">スキャンしたバーコードを担当者のメインツールへ送ります。URLを生成してLINEで送信してください。受け取る側はメインツールの「業務 → バックアップ → 受け取り」から取り込みます。</div>
       <button class="btn-generate" onclick="generateSendURL()">📡 送信用URLを生成</button>
       <textarea class="url-textarea" id="send-url-text" readonly placeholder="ここにURLが表示されます" style="display:none;"></textarea>
-      <button class="btn-copy" id="btn-copy-send" onclick="copySendURL()">📋 URLをコピーしてLINEで送る</button>
+      <div id="send-btn-area" style="display:none; flex-direction:column; gap:8px; margin-top:4px;">
+        <button id="btn-share-send" onclick="shareURL()" style="background:#28a745; color:#fff; border:none; border-radius:8px; width:100%; padding:12px; font-size:14px; font-weight:bold; cursor:pointer;">
+          📤 LINEで送る
+        </button>
+        <button id="btn-copy-send" onclick="copySendURL()" style="background:#6c757d; color:#fff; border:none; border-radius:8px; width:100%; padding:10px; font-size:13px; font-weight:bold; cursor:pointer;">
+          📋 URLをコピー
+        </button>
+      </div>
       <div class="warn-box" id="send-warn"></div>
     </div>
   </div>
@@ -423,13 +430,18 @@
   function generateSendURL() {
     if (scanItems.length === 0) { showToast('スキャン済みデータがありません', true); return; }
     const encoded = encodeShareData(scanItems);
-    const url = `share.html?data=${encoded}&from=share`;
+    const baseUrl = location.href.replace(/share\.html.*$/, '').replace(/\/$/, '');
+    const url = `${baseUrl}/share.html?data=${encoded}&from=share`;
     const textarea = document.getElementById('send-url-text');
-    const copyBtn = document.getElementById('btn-copy-send');
+    const btnArea = document.getElementById('send-btn-area');
     const warn = document.getElementById('send-warn');
     textarea.value = url;
     textarea.style.display = 'block';
-    copyBtn.style.display = 'block';
+    btnArea.style.display = 'flex';
+    // Web Share APIが使えない環境ではボタン文言を変更
+    if (!navigator.share) {
+      document.getElementById('btn-share-send').textContent = '📤 URLを開く（コピーしてLINEへ）';
+    }
     if (url.length > LIMIT) {
       warn.style.display = 'block';
       warn.textContent = `⚠️ URL長が${url.length}文字です。件数を減らすことを推奨します（目安: 30〜40件以下）。`;
@@ -439,10 +451,43 @@
     showToast(`URL生成完了 (${scanItems.length}件)`, false);
   }
 
+  function shareURL() {
+    const url = document.getElementById('send-url-text').value;
+    if (!url) return;
+    if (navigator.share) {
+      navigator.share({
+        title: '売場スキャン データ共有',
+        text: 'バーコードデータを受け取ってください。メインツールの「業務→バックアップ→受け取り」から取り込めます。',
+        url: url
+      }).then(() => {
+        showToast('共有しました', false);
+      }).catch(err => {
+        if (err.name !== 'AbortError') copyFallback(url);
+      });
+    } else {
+      copyFallback(url);
+    }
+  }
+
+  function copyFallback(url) {
+    navigator.clipboard.writeText(url)
+      .then(() => showToast('URLをコピーしました。LINEに貼り付けて送信してください', false))
+      .catch(() => {
+        const t = document.getElementById('send-url-text');
+        t.select(); document.execCommand('copy');
+        showToast('URLをコピーしました', false);
+      });
+  }
+
   function copySendURL() {
     const text = document.getElementById('send-url-text').value;
-    navigator.clipboard.writeText(text).then(() => showToast('URLをコピーしました', false))
-      .catch(() => { document.getElementById('send-url-text').select(); document.execCommand('copy'); showToast('URLをコピーしました', false); });
+    navigator.clipboard.writeText(text)
+      .then(() => showToast('URLをコピーしました', false))
+      .catch(() => {
+        document.getElementById('send-url-text').select();
+        document.execCommand('copy');
+        showToast('URLをコピーしました', false);
+      });
   }
 
   // ===== バーコードモーダル =====
