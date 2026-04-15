@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#f0f0f0">
-<title>棚番長</title>
+<title>売場スキャン</title>
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
@@ -435,10 +435,10 @@
             <div style="font-size:12px; color:#555; margin-bottom:8px;">履歴データをURLに変換して第三者用ツールと共有します。</div>
 
             <div style="background:#fff; border:1px solid #b8daff; border-radius:6px; padding:8px 10px; margin-bottom:8px;">
-                <div style="font-size:11px; color:#666; margin-bottom:5px; font-weight:bold;">📲 第三者用ツール（棚番長 共有）</div>
+                <div style="font-size:11px; color:#666; margin-bottom:5px; font-weight:bold;">📲 第三者用スキャンツール</div>
                 <div style="font-size:11px; color:#888; margin-bottom:6px;">このURLを相手にLINEで送るとスキャンツールとして使えます</div>
                 <div style="display:flex; gap:6px;">
-                    <input type="text" id="share-tool-url" readonly value="https://kanpatip2.github.io/tanabancho/share.html" style="flex:1; font-size:11px; padding:5px; background:#f8f9fa; font-family:monospace;">
+                    <input type="text" id="share-tool-url" readonly style="flex:1; font-size:11px; padding:5px; background:#f8f9fa; font-family:monospace;">
                     <button onclick="copyShareToolURL()" style="flex:0 0 60px; background:#17a2b8; font-size:12px; padding:6px;">📋 コピー</button>
                 </div>
             </div>
@@ -594,14 +594,14 @@
 </div>
 
 <script>
-    let scanList = JSON.parse(localStorage.getItem("barcode_master_list")) || [];
-    let productDB = JSON.parse(localStorage.getItem("barcode_master_db")) || {};
-    let compList = JSON.parse(localStorage.getItem("barcode_master_comp")) || [];
-    let returnList = JSON.parse(localStorage.getItem("barcode_master_return")) || [];
-    let customerOrderList = JSON.parse(localStorage.getItem("barcode_master_cust")) || [];
+    let scanList = JSON.parse(localStorage.getItem("sellfloor_list")) || [];
+    let productDB = JSON.parse(localStorage.getItem("sellfloor_db")) || {};
+    let compList = JSON.parse(localStorage.getItem("sellfloor_comp")) || [];
+    let returnList = JSON.parse(localStorage.getItem("sellfloor_return")) || [];
+    let customerOrderList = JSON.parse(localStorage.getItem("sellfloor_cust")) || [];
     
     // ===== 設定データ =====
-    let appSettings = JSON.parse(localStorage.getItem("tanabancho_settings")) || {
+    let appSettings = JSON.parse(localStorage.getItem("sellfloor_settings")) || {
         popItems: [],        // 販促物種別（初期値空）
         quickGenres: [],     // クイックジャンル（初期値空）
         labels: {
@@ -616,7 +616,7 @@
     if (!appSettings.quickGenres) appSettings.quickGenres = [];
 
     function saveSettings() {
-        localStorage.setItem("tanabancho_settings", JSON.stringify(appSettings));
+        localStorage.setItem("sellfloor_settings", JSON.stringify(appSettings));
     }
 
     for (let key in productDB) {
@@ -649,6 +649,11 @@
     let selectedDeliveryTime = '';
 
     window.addEventListener('load', () => {
+        // 共有ツールURLを動的生成（どの環境でも正しいURLになる）
+        const shareToolUrl = location.href.replace(/index\.html.*$/, '').replace(/\/$/, '') + '/share.html';
+        const urlInput = document.getElementById('share-tool-url');
+        if (urlInput) urlInput.value = shareToolUrl;
+
         applyLabels();
         renderPopItemsPrescan();
         renderQuickGenres();
@@ -1802,9 +1807,9 @@
 
     function saveData() {
         try {
-            localStorage.setItem("barcode_master_list", JSON.stringify(scanList));
-            localStorage.setItem("barcode_master_db", JSON.stringify(productDB));
-            localStorage.setItem("barcode_master_comp", JSON.stringify(compList));
+            localStorage.setItem("sellfloor_list", JSON.stringify(scanList));
+            localStorage.setItem("sellfloor_db", JSON.stringify(productDB));
+            localStorage.setItem("sellfloor_comp", JSON.stringify(compList));
         } catch(e) {
             if (e.name === 'QuotaExceededError') {
                 showToast("⚠️ 保存容量が上限に達しました。古い履歴を削除してください", true);
@@ -1816,8 +1821,8 @@
 
     function saveSideDataSafe() {
         try {
-            localStorage.setItem("barcode_master_return", JSON.stringify(returnList));
-            localStorage.setItem("barcode_master_cust", JSON.stringify(customerOrderList));
+            localStorage.setItem("sellfloor_return", JSON.stringify(returnList));
+            localStorage.setItem("sellfloor_cust", JSON.stringify(customerOrderList));
         } catch(e) {
             if (e.name === 'QuotaExceededError') {
                 showToast("⚠️ 保存容量が上限に達しました。データを整理してください", true);
@@ -1878,10 +1883,10 @@
         const detail = document.getElementById('storage-detail');
         if (!barInner || !label) return;
 
-        const keys = ['barcode_master_list','barcode_master_db','barcode_master_comp','barcode_master_return','barcode_master_cust'];
+        const keys = ['sellfloor_list','sellfloor_db','sellfloor_comp','sellfloor_return','sellfloor_cust'];
         let total = 0;
         let breakdown = [];
-        const names = { barcode_master_list:'履歴', barcode_master_db:'商品DB', barcode_master_comp:'アラート', barcode_master_return:'返品', barcode_master_cust:'案件' };
+        const names = { sellfloor_list:'履歴', sellfloor_db:'商品DB', sellfloor_comp:'アラート', sellfloor_return:'返品', sellfloor_cust:'案件' };
         keys.forEach(k => {
             const v = localStorage.getItem(k) || '';
             const kb = Math.round(v.length * 2 / 1024);  // UTF-16 2bytes/char
@@ -2811,7 +2816,7 @@
     function exportData() { 
         const data = { list: scanList, db: productDB, comp: compList, return: returnList, cust: customerOrderList, date: new Date().toISOString() }; 
         const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const url = URL.createObjectURL(blob); 
-        const a = document.createElement("a"); a.href = url; a.download = `barcode_master_all_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); 
+        const a = document.createElement("a"); a.href = url; a.download = `sellfloor_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); 
     }
     
     function importData(input) {

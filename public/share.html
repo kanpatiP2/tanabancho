@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a2e">
+<title>売場スキャン 共有ツール</title>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f0f0f0; margin: 0; padding: 0 0 120px; touch-action: manipulation; overflow-x: hidden; }
+
+  .header { background: #1a1a2e; color: #fff; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .header-title { font-size: 15px; font-weight: bold; }
+  .header-count { font-size: 12px; background: rgba(255,255,255,0.15); padding: 3px 8px; border-radius: 12px; }
+
+  .mode-tabs { display: flex; background: #fff; border-bottom: 1px solid #ddd; }
+  .mode-tab { flex: 1; padding: 12px 6px; text-align: center; font-size: 13px; font-weight: bold; color: #888; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  .mode-tab.active { color: #1a1a2e; border-bottom-color: #1a1a2e; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* スキャン画面 */
+  .camera-wrap { position: relative; width: 100%; max-width: 500px; margin: 10px auto; background: #000; border-radius: 10px; overflow: hidden; aspect-ratio: 1/1; border: 3px solid transparent; transition: border-color 0.15s; }
+  .camera-wrap.flash-ok { border-color: #28a745; }
+  .camera-wrap.flash-ng { border-color: #dc3545; }
+  #reader { width: 100%; height: 100%; }
+  #tap-layer { position: absolute; inset: 0; z-index: 5; cursor: pointer; }
+  #cam-cover { position: absolute; inset: 0; background: rgba(0,0,0,0.85); color: #fff; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; z-index: 10; cursor: pointer; }
+  .cover-icon { font-size: 3em; }
+  .cover-text { font-size: 1.3em; font-weight: bold; }
+  #cam-status { text-align: center; font-size: 12px; color: #666; height: 1.2em; margin: -4px 0 6px; }
+  .btn-aspect { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(255,255,255,0.4); border-radius: 4px; font-size: 11px; padding: 4px 8px; z-index: 20; cursor: pointer; }
+  .btn-aspect.tall { background: rgba(255,165,0,0.75); }
+
+  .manual-row { display: flex; gap: 6px; max-width: 500px; margin: 0 auto 10px; padding: 0 10px; }
+  .manual-row input { flex: 1; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; }
+  .manual-row button { background: #28a745; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: bold; color: #fff; border: none; }
+
+  /* リスト */
+  .list-wrap { max-width: 500px; margin: 0 auto; padding: 0 10px; }
+  .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .list-title { font-size: 13px; font-weight: bold; color: #333; }
+  .btn-clear { background: #dc3545; color: #fff; border: none; border-radius: 4px; font-size: 11px; padding: 4px 10px; cursor: pointer; }
+
+  .scan-item { background: #fff; border-radius: 8px; border-left: 4px solid #1a1a2e; padding: 10px 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .scan-item:first-child { border-left-color: #007bff; background: #e9f2ff; }
+  .item-num { font-size: 11px; color: #888; font-weight: bold; min-width: 24px; text-align: center; }
+  .item-info { flex: 1; }
+  .item-code { font-size: 16px; font-weight: bold; font-family: monospace; color: #1a1a2e; }
+  .item-name { font-size: 12px; color: #555; margin-top: 2px; }
+  .item-zoom { font-size: 18px; color: #007bff; opacity: 0.7; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px; }
+
+  /* 送信 */
+  .send-wrap { max-width: 500px; margin: 0 auto; padding: 10px; }
+  .send-card { background: #fff; border-radius: 10px; border: 1px solid #ddd; padding: 16px; margin-bottom: 10px; }
+  .send-card h3 { font-size: 14px; font-weight: bold; color: #333; margin: 0 0 10px; }
+  .send-desc { font-size: 12px; color: #666; margin-bottom: 10px; line-height: 1.6; }
+  .url-textarea { width: 100%; height: 70px; font-size: 11px; border: 1px solid #ccc; border-radius: 6px; padding: 8px; font-family: monospace; resize: none; background: #f8f9fa; }
+  .btn-generate { background: #1a1a2e; color: #fff; border: none; border-radius: 8px; width: 100%; padding: 12px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 8px; }
+  .btn-copy { background: #28a745; color: #fff; border: none; border-radius: 6px; width: 100%; padding: 10px; font-size: 13px; font-weight: bold; cursor: pointer; display: none; }
+  .warn-box { background: #fff3cd; color: #856404; border-radius: 6px; padding: 8px 10px; font-size: 11px; margin-top: 6px; display: none; }
+
+  /* 受信（表示モード） */
+  .recv-item { background: #fff; border-radius: 8px; border-left: 4px solid #17a2b8; padding: 10px 12px; margin-bottom: 6px; cursor: pointer; }
+  .recv-code { font-size: 16px; font-weight: bold; font-family: monospace; color: #333; }
+  .recv-meta { font-size: 11px; color: #666; margin-top: 3px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .meta-badge { background: #e9ecef; color: #333; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; }
+  .meta-badge.pop { background: #ffc107; color: #000; }
+  .meta-badge.order { background: #dc3545; color: #fff; }
+  .meta-badge.genre { background: #6f42c1; color: #fff; }
+
+  /* バーコードモーダル */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; }
+  .modal-content { background: #fff; padding: 20px; border-radius: 10px; max-width: 95%; min-width: 280px; display: flex; flex-direction: column; align-items: center; }
+  #zoom-code { font-size: 26px; font-weight: bold; letter-spacing: 2px; margin-top: 12px; }
+  #zoom-name { font-size: 18px; color: #007bff; font-weight: bold; margin-top: 6px; }
+  #zoom-meta { font-size: 13px; color: #555; margin-top: 4px; }
+  .modal-nav { display: flex; gap: 10px; align-items: center; margin-top: 14px; }
+  .btn-nav { background: #444; color: #fff; border: none; border-radius: 8px; padding: 8px 18px; font-size: 18px; cursor: pointer; }
+  .nav-hint { font-size: 11px; color: #aaa; }
+
+  /* トースト */
+  #ios-line-banner { display:none; background:#fff3cd; border-bottom:2px solid #ffc107; padding:10px 14px; text-align:center; font-size:13px; color:#856404; }
+  #ios-line-banner strong { display:block; margin-bottom:6px; }
+  #btn-open-safari { background:#007aff; color:#fff; border:none; border-radius:8px; padding:10px 20px; font-size:14px; font-weight:bold; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div id="ios-line-banner">
+  <strong>⚠️ LINEアプリ内ではカメラが使えない場合があります</strong>
+  <button id="btn-open-safari" onclick="openInSafari()">Safariで開く</button>
+</div>
+
+<div class="header">
+  <div class="header-title">📡 売場スキャン 共有ツール</div>
+  <div class="header-count" id="header-count">0件</div>
+</div>
+
+<div class="mode-tabs">
+  <div class="mode-tab active" id="tab-scan" onclick="switchTab('scan')">📷 スキャン</div>
+  <div class="mode-tab" id="tab-send" onclick="switchTab('send')">🔗 送信</div>
+  <div class="mode-tab" id="tab-recv" onclick="switchTab('recv')">📥 受信表示</div>
+</div>
+
+<!-- スキャンタブ -->
+<div class="tab-content active" id="content-scan">
+  <div class="camera-wrap" id="cam-wrap">
+    <div id="reader"></div>
+    <div id="tap-layer" onclick="handleTap()"></div>
+    <div id="cam-cover" onclick="startCamera()">
+      <div class="cover-icon">▶</div>
+      <div class="cover-text">タップしてスキャン開始</div>
+    </div>
+    <button class="btn-aspect" id="btn-aspect" onclick="toggleAspect(event)">📐 横</button>
+  </div>
+  <div id="cam-status"></div>
+
+  <div class="manual-row">
+    <input type="number" id="manual-input" placeholder="バーコード手入力">
+    <button onclick="addManual()">追加</button>
+  </div>
+
+  <div class="list-wrap">
+    <div class="list-header">
+      <div class="list-title" id="list-title">スキャン済み (0件)</div>
+      <button class="btn-clear" onclick="clearAll()">全消去</button>
+    </div>
+    <div id="scan-list"></div>
+  </div>
+</div>
+
+<!-- 送信タブ -->
+<div class="tab-content" id="content-send">
+  <div class="send-wrap">
+    <div class="send-card">
+      <h3>🔗 メインツールへ送信</h3>
+      <div class="send-desc">スキャンしたバーコードを担当者のメインツールへ送ります。URLを生成してLINEで送信してください。受け取る側はメインツールの「業務 → バックアップ → 受け取り」から取り込みます。</div>
+      <button class="btn-generate" onclick="generateSendURL()">📡 送信用URLを生成</button>
+      <textarea class="url-textarea" id="send-url-text" readonly placeholder="ここにURLが表示されます" style="display:none;"></textarea>
+      <button class="btn-copy" id="btn-copy-send" onclick="copySendURL()">📋 URLをコピーしてLINEで送る</button>
+      <div class="warn-box" id="send-warn"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 受信表示タブ -->
+<div class="tab-content" id="content-recv">
+  <div class="send-wrap">
+    <div class="send-card" style="margin-bottom:10px;">
+      <h3>📥 受信データ表示</h3>
+      <div class="send-desc" id="recv-desc">メインツールから送られたURLを開くとここにデータが表示されます。</div>
+    </div>
+    <div id="recv-list"></div>
+  </div>
+</div>
+
+<!-- バーコードモーダル -->
+<div class="modal-overlay" id="zoom-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-content">
+    <canvas id="zoom-canvas"></canvas>
+    <div id="zoom-code"></div>
+    <div id="zoom-name"></div>
+    <div id="zoom-meta"></div>
+    <div class="modal-nav">
+      <button class="btn-nav" id="btn-prev" onclick="navigateModal(-1)" style="display:none;">◀</button>
+      <span class="nav-hint" id="nav-hint">枠外タップで閉じる</span>
+      <button class="btn-nav" id="btn-next" onclick="navigateModal(1)" style="display:none;">▶</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  let scanItems = [];        // このツールでスキャンしたデータ
+  let recvItems = [];        // メインから受信したデータ
+  let html5QrCode = null;
+  let isCameraRunning = false;
+  let isProcessing = false;
+  let isTallMode = false;
+  let currentTab = 'scan';
+  let modalIndex = -1;
+  let modalSource = 'scan'; // 'scan' or 'recv'
+
+  // ===== iOS LINE内ブラウザ検出 =====
+  (function() {
+    const ua = navigator.userAgent;
+    const isIOS = /iPhone|iPad|iPod/.test(ua);
+    const isLINE = /Line\//.test(ua);
+    if (isIOS && isLINE) {
+      document.getElementById('ios-line-banner').style.display = 'block';
+    }
+  })();
+
+  function openInSafari() {
+    // LINEのiOS内ブラウザからSafariで開く標準的な方法
+    location.href = 'x-safari-' + location.href;
+  }
+
+  // ===== 起動時: URLパラメータ確認 =====
+  window.addEventListener('load', () => {
+    // まずlocalStorageからスキャン済みデータを復元
+    try {
+      const saved = localStorage.getItem('sellfloor_share');
+      if (saved) {
+        scanItems = JSON.parse(saved);
+        showToast(`前回のスキャン済み${scanItems.length}件を復元しました`, false);
+      }
+    } catch(e) {}
+
+    const params = new URLSearchParams(location.search);
+    const data = params.get('data');
+    const from = params.get('from');
+    if (data) {
+      try {
+        recvItems = decodeShareData(data);
+        renderRecvList();
+        if (from === 'main') {
+          switchTab('recv');
+          showToast(`${recvItems.length}件のデータを受信しました`, false);
+        }
+      } catch(e) {
+        showToast('データの読み込みに失敗しました', true);
+      }
+    }
+    renderScanList();
+    updateHeaderCount();
+  });
+
+  // ===== タブ切替 =====
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('content-' + tab).classList.add('active');
+    if (tab !== 'scan' && isCameraRunning) forceStop();
+  }
+
+  // ===== カメラ =====
+  function startCamera() {
+    if (html5QrCode && html5QrCode.isScanning) return;
+    if (!html5QrCode) {
+      html5QrCode = new Html5Qrcode("reader", {
+        formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.ITF]
+      });
+    }
+    document.getElementById('cam-cover').style.display = 'none';
+    document.getElementById('cam-status').innerText = 'カメラ起動中...';
+    isProcessing = false;
+    const qrbox = isTallMode
+      ? (w, h) => ({ width: w * 0.4, height: h * 0.85 })
+      : (w, h) => ({ width: w * 0.85, height: h * 0.4 });
+    html5QrCode.start({ facingMode: 'environment' }, { fps: 5, qrbox, aspectRatio: 1.0 }, onScanSuccess)
+      .then(() => { isCameraRunning = true; document.getElementById('cam-status').innerText = ''; })
+      .catch(err => { document.getElementById('cam-status').innerText = '起動エラー: ' + err; });
+  }
+
+  function forceStop() {
+    if (!html5QrCode) return;
+    html5QrCode.stop().then(() => {
+      isCameraRunning = false;
+      document.getElementById('cam-cover').style.display = 'flex';
+      document.getElementById('cam-status').innerText = 'カメラ停止中';
+    }).catch(() => {});
+  }
+
+  function handleTap() { if (isCameraRunning) forceStop(); }
+
+  function toggleAspect(e) {
+    e.stopPropagation();
+    isTallMode = !isTallMode;
+    const btn = document.getElementById('btn-aspect');
+    btn.textContent = isTallMode ? '📐 縦' : '📐 横';
+    btn.classList.toggle('tall', isTallMode);
+    if (isCameraRunning) { forceStop(); setTimeout(startCamera, 400); }
+  }
+
+  function flash(type) {
+    const wrap = document.getElementById('cam-wrap');
+    wrap.classList.add(type === 'ok' ? 'flash-ok' : 'flash-ng');
+    setTimeout(() => wrap.classList.remove('flash-ok', 'flash-ng'), 300);
+  }
+
+  function onScanSuccess(code) {
+    if (isProcessing) return;
+    code = code.replace(/\s+/g, '');
+    if (code.startsWith('http') || /[^0-9a-zA-Z]/.test(code)) { flash('ng'); return; }
+    isProcessing = true;
+    // ITF変換
+    if (code.length === 14 && /^\d+$/.test(code)) {
+      const core = code.substring(1, 13); let sum = 0;
+      for (let i = 0; i < 12; i++) sum += parseInt(core[i]) * (i % 2 === 0 ? 1 : 3);
+      const cd = (10 - (sum % 10)) % 10;
+      code = core + cd;
+    }
+    if (scanItems.some(i => i.code === code)) {
+      showToast('⚠️ 既に登録済みです', true); flash('ng');
+      setTimeout(() => { isProcessing = false; }, 800);
+      return;
+    }
+    const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    scanItems.unshift({ id: 'sh' + Date.now() + Math.random().toString(36).substr(2, 4), code, time: nowStr });
+    try { localStorage.setItem('sellfloor_share', JSON.stringify(scanItems)); } catch(e) {}
+    renderScanList();
+    updateHeaderCount();
+    flash('ok');
+    showToast(`登録: ${code}`, false);
+    forceStop();
+    setTimeout(() => { isProcessing = false; }, 500);
+  }
+
+  function addManual() {
+    const input = document.getElementById('manual-input');
+    const code = input.value.trim();
+    if (!code) return;
+    onScanSuccess(code);
+    input.value = '';
+  }
+
+  // ===== リスト描画 =====
+  function renderScanList() {
+    const el = document.getElementById('scan-list');
+    const title = document.getElementById('list-title');
+    title.textContent = `スキャン済み (${scanItems.length}件)`;
+    if (scanItems.length === 0) {
+      el.innerHTML = '<div class="empty-state">スキャンすると<br>ここに一覧が表示されます</div>';
+      return;
+    }
+    el.innerHTML = scanItems.map((item, i) => `
+      <div class="scan-item" onclick="openModal(${i}, 'scan')">
+        <div class="item-num">${scanItems.length - i}</div>
+        <div class="item-info">
+          <div class="item-code">${item.code}</div>
+          <div class="item-name">${item.time}</div>
+        </div>
+        <div class="item-zoom">🔍</div>
+      </div>
+    `).join('');
+  }
+
+  function renderRecvList() {
+    const el = document.getElementById('recv-list');
+    const desc = document.getElementById('recv-desc');
+    if (recvItems.length === 0) {
+      desc.textContent = 'メインツールから送られたURLを開くとここにデータが表示されます。';
+      el.innerHTML = '';
+      return;
+    }
+    desc.textContent = `${recvItems.length}件のデータを受信しています。タップでバーコードを表示できます。`;
+    el.innerHTML = recvItems.map((item, i) => {
+      const oArr = Array.isArray(item.order) ? item.order : [];
+      const badges = [
+        item.genre ? `<span class="meta-badge genre">${item.genre}</span>` : '',
+        item.pop ? `<span class="meta-badge pop">POP</span>` : '',
+        ...oArr.map(o => `<span class="meta-badge order">${o}</span>`),
+        item.end ? `<span class="meta-badge">エンド</span>` : '',
+        item.memo ? `<span class="meta-badge">${item.memo}</span>` : ''
+      ].filter(Boolean).join('');
+      return `
+        <div class="recv-item" onclick="openModal(${i}, 'recv')">
+          <div class="recv-code">${item.code}</div>
+          ${item.productName ? `<div style="font-size:13px; font-weight:bold; color:#007bff; margin-top:2px;">${item.productName}</div>` : ''}
+          <div class="recv-meta">${badges}<span style="font-size:10px; color:#aaa;">${item.time}</span></div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateHeaderCount() {
+    document.getElementById('header-count').textContent = `${scanItems.length}件`;
+  }
+
+  function clearAll() {
+    if (scanItems.length === 0) return;
+    if (!confirm(`スキャン済み ${scanItems.length}件を全消去しますか？`)) return;
+    scanItems = [];
+    localStorage.removeItem('sellfloor_share');
+    renderScanList();
+    updateHeaderCount();
+    showToast('リストを消去しました', false);
+  }
+
+  // ===== URL生成・コピー =====
+  const LIMIT = 4000;
+
+  function encodeShareData(items) {
+    const slim = items.map(i => ({
+      id: i.id, c: i.code, t: i.time,
+      n: i.productName || '', m: i.memo || '', g: i.genre || '',
+      p: i.pop ? 1 : 0, pd: i.popDetails || [], e: i.end ? 1 : 0, o: i.order || []
+    }));
+    return LZString.compressToEncodedURIComponent(JSON.stringify(slim));
+  }
+
+  function decodeShareData(encoded) {
+    let json;
+    try {
+      json = LZString.decompressFromEncodedURIComponent(encoded);
+      if (!json) throw new Error('lz failed');
+    } catch(e) {
+      // 旧形式(btoa)フォールバック
+      json = decodeURIComponent(atob(encoded));
+    }
+    const slim = JSON.parse(json);
+    return slim.map(i => ({
+      id: i.id || ('r' + Date.now() + Math.random().toString(36).substr(2,4)),
+      code: i.c, time: i.t,
+      productName: i.n || '', memo: i.m || '', genre: i.g || '',
+      pop: !!i.p, popDetails: i.pd || [], end: !!i.e, order: i.o || [],
+      expiry: '', isNoLearn: true, boxJan: '', initialEdit: false, isProtected: false
+    }));
+  }
+
+  function generateSendURL() {
+    if (scanItems.length === 0) { showToast('スキャン済みデータがありません', true); return; }
+    const encoded = encodeShareData(scanItems);
+    const baseUrl = location.href.replace(/share\.html.*$/, '').replace(/\/$/, '');
+    const url = `${baseUrl}/share.html?data=${encoded}&from=share`;
+    const textarea = document.getElementById('send-url-text');
+    const copyBtn = document.getElementById('btn-copy-send');
+    const warn = document.getElementById('send-warn');
+    textarea.value = url;
+    textarea.style.display = 'block';
+    copyBtn.style.display = 'block';
+    if (url.length > LIMIT) {
+      warn.style.display = 'block';
+      warn.textContent = `⚠️ URL長が${url.length}文字です。件数を減らすことを推奨します（目安: 30〜40件以下）。`;
+    } else {
+      warn.style.display = 'none';
+    }
+    showToast(`URL生成完了 (${scanItems.length}件)`, false);
+  }
+
+  function copySendURL() {
+    const text = document.getElementById('send-url-text').value;
+    navigator.clipboard.writeText(text).then(() => showToast('URLをコピーしました', false))
+      .catch(() => { document.getElementById('send-url-text').select(); document.execCommand('copy'); showToast('URLをコピーしました', false); });
+  }
+
+  // ===== バーコードモーダル =====
+  function openModal(index, source) {
+    modalIndex = index;
+    modalSource = source;
+    renderModal();
+    document.getElementById('zoom-modal').style.display = 'flex';
+  }
+
+  function renderModal() {
+    const list = modalSource === 'scan' ? scanItems : recvItems;
+    const item = list[modalIndex];
+    if (!item) return;
+    document.getElementById('zoom-code').textContent = item.code;
+    document.getElementById('zoom-name').textContent = item.productName || '';
+    const oArr = Array.isArray(item.order) ? item.order : [];
+    const parts = [item.genre, ...oArr, item.pop ? 'POP' : '', item.end ? 'エンド' : '', item.memo].filter(Boolean);
+    document.getElementById('zoom-meta').textContent = parts.join('  ');
+    const canvas = document.getElementById('zoom-canvas');
+    try {
+      let opts = { format: 'CODE128', width: 4, height: 150, displayValue: false, margin: 0, background: '#fff' };
+      if (/^\d+$/.test(item.code)) {
+        if (item.code.length === 13) opts.format = 'EAN13';
+        else if (item.code.length === 8) opts.format = 'EAN8';
+      }
+      JsBarcode(canvas, item.code, opts);
+    } catch(e) {}
+    const prev = document.getElementById('btn-prev');
+    const next = document.getElementById('btn-next');
+    const hint = document.getElementById('nav-hint');
+    prev.style.display = modalIndex > 0 ? 'inline-block' : 'none';
+    next.style.display = modalIndex < list.length - 1 ? 'inline-block' : 'none';
+    hint.textContent = list.length > 1 ? `${modalIndex + 1} / ${list.length}　枠外タップで閉じる` : '枠外タップで閉じる';
+  }
+
+  function navigateModal(delta) {
+    const list = modalSource === 'scan' ? scanItems : recvItems;
+    const newIdx = modalIndex + delta;
+    if (newIdx < 0 || newIdx >= list.length) return;
+    modalIndex = newIdx;
+    renderModal();
+  }
+
+  function closeModal() { document.getElementById('zoom-modal').style.display = 'none'; }
+
+  // ===== トースト =====
+  function showToast(msg, isWarn) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = isWarn ? 'warn show' : 'show';
+    setTimeout(() => { t.className = t.className.replace('show', ''); }, 2800);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isCameraRunning) forceStop();
+  });
+  document.addEventListener('focusin', e => {
+    if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) {
+      setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+    }
+  });
+</script>
+</body>
+</html>
