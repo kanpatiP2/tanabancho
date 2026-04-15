@@ -207,6 +207,15 @@
 
   // ===== 起動時: URLパラメータ確認 =====
   window.addEventListener('load', () => {
+    // まずlocalStorageからスキャン済みデータを復元
+    try {
+      const saved = localStorage.getItem('tanabancho_share');
+      if (saved) {
+        scanItems = JSON.parse(saved);
+        showToast(`前回のスキャン済み${scanItems.length}件を復元しました`, false);
+      }
+    } catch(e) {}
+
     const params = new URLSearchParams(location.search);
     const data = params.get('data');
     const from = params.get('from');
@@ -300,6 +309,7 @@
     }
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     scanItems.unshift({ id: 'sh' + Date.now() + Math.random().toString(36).substr(2, 4), code, time: nowStr });
+    try { localStorage.setItem('tanabancho_share', JSON.stringify(scanItems)); } catch(e) {}
     renderScanList();
     updateHeaderCount();
     flash('ok');
@@ -373,6 +383,7 @@
     if (scanItems.length === 0) return;
     if (!confirm(`スキャン済み ${scanItems.length}件を全消去しますか？`)) return;
     scanItems = [];
+    localStorage.removeItem('tanabancho_share');
     renderScanList();
     updateHeaderCount();
     showToast('リストを消去しました', false);
