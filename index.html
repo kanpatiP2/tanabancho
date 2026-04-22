@@ -1567,10 +1567,10 @@
         }
         const { fps, focusVal } = getCamSettings();
         const videoConstraints = { facingMode: "environment" };
-        if (focusVal !== 'none') {
-            videoConstraints.advanced = [{ focusMode: focusVal }];
-        }
         const config = { fps, qrbox: qrboxFn, aspectRatio: 1.0 };
+        if (focusVal !== 'none') {
+            config.videoConstraints = { facingMode: "environment", advanced: [{ focusMode: focusVal }] };
+        }
         html5QrCode.start(videoConstraints, config, onScanSuccess)
         .then(() => { isCameraRunning = true; document.getElementById("status").innerText = ""; })
         .catch(err => { document.getElementById("status").innerText = "起動エラー: " + err; });

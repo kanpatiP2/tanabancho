@@ -384,10 +384,11 @@
       ? (w, h) => ({ width: w * 0.4, height: h * 0.85 })
       : (w, h) => ({ width: w * 0.85, height: h * 0.4 });
     const videoConstraints = { facingMode: 'environment' };
+    const camConfig = { fps, qrbox, aspectRatio: 1.0 };
     if (focusVal !== 'none') {
-      videoConstraints.advanced = [{ focusMode: focusVal }];
+      camConfig.videoConstraints = { facingMode: 'environment', advanced: [{ focusMode: focusVal }] };
     }
-    html5QrCode.start(videoConstraints, { fps, qrbox, aspectRatio: 1.0 }, onScanSuccess)
+    html5QrCode.start(videoConstraints, camConfig, onScanSuccess)
       .then(() => { isCameraRunning = true; document.getElementById('cam-status').innerText = ''; })
       .catch(err => { document.getElementById('cam-status').innerText = '起動エラー: ' + err; });
   }
