@@ -462,17 +462,36 @@
 
     <div id="temp-summary"></div>
 
-    <button class="section-toggle-btn" onclick="toggleSection('return-section', this)">
-        <span>🔄 返品管理</span><span class="toggle-icon">▼</span>
+    <button class="section-toggle-btn" onclick="toggleSection('notes-section', this); refreshNotesList();">
+        <span>📝 メモ</span><span class="toggle-icon">▼</span>
     </button>
-    <div id="return-section" style="display:none; flex-direction:column; gap:8px; margin-bottom:15px; font-size:12px; border:1px solid #ddd; padding:10px; border-radius:8px;">
-        <div style="display:flex; gap:5px; align-items:center;">JAN: <input type="number" id="return-jan" style="flex:1;"> <button onclick="startSideScan('return')" style="background:#17a2b8; padding:8px;">📸</button></div>
-        <div style="display:flex; gap:5px; align-items:center;">受付開始: <input type="date" id="return-start" style="flex:1;"></div>
-        <div style="display:flex; gap:5px; align-items:center;">受付終了: <input type="date" id="return-end" style="flex:1;"></div>
-        <div style="display:flex; gap:5px; align-items:center;">返品予定日: <input type="date" id="return-date" style="flex:1;"></div>
-        <div style="display:flex; gap:5px; align-items:center;">備考: <input type="text" id="return-memo" style="flex:1;"></div>
-        <button onclick="addReturnItem()" style="background:#007bff; padding:8px; margin-top:5px;">登録</button>
-        <ul id="return-list" style="list-style:none; padding:0; margin-top:10px; text-align:left;"></ul>
+    <div id="notes-section" style="display:none; flex-direction:column; gap:8px; margin-bottom:15px; border:1px solid #ddd; padding:10px; border-radius:8px;">
+        <div style="display:flex; gap:6px; align-items:center;">
+            <input type="text" id="note-new-title" placeholder="タイトルを入力して追加" maxlength="60"
+                style="flex:1; font-size:13px; padding:8px; border:1px solid #ccc; border-radius:6px;"
+                onkeydown="if(event.key==='Enter') openNoteNew()">
+            <button onclick="openNoteNew()" style="background:#007bff; padding:8px 14px; font-size:13px; border-radius:6px; white-space:nowrap;">＋ 追加</button>
+        </div>
+        <div class="notes-grid" id="notes-grid">
+            <div style="grid-column:1/-1; color:#aaa; font-size:12px; text-align:center; padding:16px 0;">メモはまだありません</div>
+        </div>
+    </div>
+
+    <button class="section-toggle-btn" onclick="toggleSection('reminder-section', this); refreshReminderList();">
+        <span>⏰ スケジュールリマインダー</span><span class="toggle-icon">▼</span>
+    </button>
+    <div id="reminder-section" style="display:none; flex-direction:column; gap:8px; margin-bottom:15px; font-size:12px; border:1px solid #ddd; padding:10px; border-radius:8px;">
+        <div style="color:#555; font-size:11px; margin-bottom:4px;">指定した日時になると、履歴欄の先頭にメモが表示されます。<br>※アプリを開いている間のみ発火します（1分毎にチェック）</div>
+        <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+            <span style="font-weight:bold; white-space:nowrap;">日時:</span>
+            <input type="datetime-local" id="reminder-datetime" style="flex:1; min-width:180px;">
+        </div>
+        <div style="display:flex; gap:5px; align-items:center;">
+            <span style="font-weight:bold; white-space:nowrap;">メモ:</span>
+            <input type="text" id="reminder-memo" placeholder="表示するメモ内容" style="flex:1;">
+        </div>
+        <button onclick="addReminder()" style="background:#007bff; padding:8px; margin-top:4px;">登録</button>
+        <ul id="reminder-list" style="list-style:none; padding:0; margin-top:4px;"></ul>
     </div>
 
     <button class="section-toggle-btn" onclick="toggleSection('customer-section', this)">
@@ -534,36 +553,17 @@
         <ul id="cust-list" style="list-style:none; padding:0; margin-top:10px; text-align:left;"></ul>
     </div>
 
-    <button class="section-toggle-btn" onclick="toggleSection('notes-section', this); refreshNotesList();">
-        <span>📝 メモ</span><span class="toggle-icon">▼</span>
+    <button class="section-toggle-btn" onclick="toggleSection('return-section', this)">
+        <span>🔄 返品管理</span><span class="toggle-icon">▼</span>
     </button>
-    <div id="notes-section" style="display:none; flex-direction:column; gap:8px; margin-bottom:15px; border:1px solid #ddd; padding:10px; border-radius:8px;">
-        <div style="display:flex; gap:6px; align-items:center;">
-            <input type="text" id="note-new-title" placeholder="タイトルを入力して追加" maxlength="60"
-                style="flex:1; font-size:13px; padding:8px; border:1px solid #ccc; border-radius:6px;"
-                onkeydown="if(event.key==='Enter') openNoteNew()">
-            <button onclick="openNoteNew()" style="background:#007bff; padding:8px 14px; font-size:13px; border-radius:6px; white-space:nowrap;">＋ 追加</button>
-        </div>
-        <div class="notes-grid" id="notes-grid">
-            <div style="grid-column:1/-1; color:#aaa; font-size:12px; text-align:center; padding:16px 0;">メモはまだありません</div>
-        </div>
-    </div>
-
-    <button class="section-toggle-btn" onclick="toggleSection('reminder-section', this); refreshReminderList();">
-        <span>⏰ スケジュールリマインダー</span><span class="toggle-icon">▼</span>
-    </button>
-    <div id="reminder-section" style="display:none; flex-direction:column; gap:8px; margin-bottom:15px; font-size:12px; border:1px solid #ddd; padding:10px; border-radius:8px;">
-        <div style="color:#555; font-size:11px; margin-bottom:4px;">指定した日時になると、履歴欄の先頭にメモが表示されます。<br>※アプリを開いている間のみ発火します（1分毎にチェック）</div>
-        <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
-            <span style="font-weight:bold; white-space:nowrap;">日時:</span>
-            <input type="datetime-local" id="reminder-datetime" style="flex:1; min-width:180px;">
-        </div>
-        <div style="display:flex; gap:5px; align-items:center;">
-            <span style="font-weight:bold; white-space:nowrap;">メモ:</span>
-            <input type="text" id="reminder-memo" placeholder="表示するメモ内容" style="flex:1;">
-        </div>
-        <button onclick="addReminder()" style="background:#007bff; padding:8px; margin-top:4px;">登録</button>
-        <ul id="reminder-list" style="list-style:none; padding:0; margin-top:4px;"></ul>
+    <div id="return-section" style="display:none; flex-direction:column; gap:8px; margin-bottom:15px; font-size:12px; border:1px solid #ddd; padding:10px; border-radius:8px;">
+        <div style="display:flex; gap:5px; align-items:center;">JAN: <input type="number" id="return-jan" style="flex:1;"> <button onclick="startSideScan('return')" style="background:#17a2b8; padding:8px;">📸</button></div>
+        <div style="display:flex; gap:5px; align-items:center;">受付開始: <input type="date" id="return-start" style="flex:1;"></div>
+        <div style="display:flex; gap:5px; align-items:center;">受付終了: <input type="date" id="return-end" style="flex:1;"></div>
+        <div style="display:flex; gap:5px; align-items:center;">返品予定日: <input type="date" id="return-date" style="flex:1;"></div>
+        <div style="display:flex; gap:5px; align-items:center;">備考: <input type="text" id="return-memo" style="flex:1;"></div>
+        <button onclick="addReturnItem()" style="background:#007bff; padding:8px; margin-top:5px;">登録</button>
+        <ul id="return-list" style="list-style:none; padding:0; margin-top:10px; text-align:left;"></ul>
     </div>
 
     <button class="section-toggle-btn" onclick="toggleSection('backup-section', this)">
@@ -2037,11 +2037,7 @@
             </div>
         `;
         document.body.appendChild(overlay);
-        // タイトルにフォーカス（本文は触れない）
-        setTimeout(() => {
-            const t = document.getElementById('note-edit-title-input');
-            if (t) t.focus();
-        }, 100);
+        // フォーカスは自動付与しない（モバイルでキーボードが開くのを防ぐ）
     }
 
     function saveNoteField(id, field, value) {
