@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#f0f0f0">
-<title>売場スキャン</title>
+<title>棚番長</title>
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
@@ -26,7 +26,7 @@
   .top-controls { display: flex; gap: 6px; align-items: stretch; justify-content: space-between; margin: 0 auto 10px; max-width: 500px; height: 38px; }
   .btn-top-menu { flex: 0 0 45px; background: #fff; color: #333; border: 1px solid #ccc; border-radius: 4px; font-size: 10px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; box-shadow: 0 1px 2px rgba(0,0,0,0.1); position: relative; }
   .btn-db { flex: 0 0 35px; background: #17a2b8; border-radius: 4px; font-size: 16px; padding: 0; display: flex; align-items: center; justify-content: center; position: relative; }
-  .btn-mode-toggle { flex: 0 0 52px; font-size: 9px; background: #6c757d; border-radius: 4px; padding: 0 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; line-height: 1.3; text-align: center; }
+  .btn-mode-toggle { flex: 0 0 45px; font-size: 11px; background: #6c757d; border-radius: 4px; padding: 0; display: flex; align-items: center; justify-content: center; position: relative; }
   .btn-merge { flex: 1; font-size: 15px; background: #007bff; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 0;}
   .btn-reset { flex: 0 0 40px; font-size: 16px; background: #dc3545; border-radius: 4px; padding: 0; display: flex; align-items: center; justify-content: center; }
 
@@ -143,7 +143,7 @@
   .btn-aspect-toggle { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.55); color: white; border: 1px solid rgba(255,255,255,0.4); border-radius: 4px; font-size: 11px; padding: 4px 8px; z-index: 20; cursor: pointer; box-shadow: none; }
   .btn-aspect-toggle.tall-mode { background: rgba(255,165,0,0.75); border-color: orange; }
 
-  /* 売価確認モード */
+  /* 競合対抗確認モード */
   #comp-check-mode-bar { display:none; background:#1a1a2e; color:#e94560; padding:10px; text-align:center; font-weight:bold; font-size:13px; max-width:500px; margin:0 auto 8px; border-radius:8px; border:2px solid #e94560; }
   #comp-check-pending { background:#fff; border:1px solid #e94560; border-radius:6px; padding:8px; max-width:500px; margin:0 auto 8px; display:none; }
 
@@ -157,6 +157,27 @@
   /* 日時選択UI */
   .time-btn { background:#e9ecef; color:#333; border:1px solid #ccc; padding:5px 8px; font-size:12px; border-radius:4px; box-shadow:none; }
   .time-btn.selected { background:#007bff; color:#fff; border-color:#007bff; }
+
+  /* リマインダー履歴アイテム */
+  .item.reminder-item { background: #fffdf0; border-left: 5px solid #ffc107 !important; }
+  .item.reminder-item .item-code { color: #856404; font-size: 16px; }
+
+  /* メモ機能 */
+  .notes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .note-card { border-radius: 8px; border: 1px solid #e0e0e0; padding: 10px; cursor: pointer; position: relative; transition: box-shadow 0.15s; min-height: 60px; }
+  .note-card:active { box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+  .note-card.pinned-card { border: 2px solid #ffc107; }
+  .note-card-title { font-weight: bold; font-size: 13px; color: #222; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .note-card-body { font-size: 11px; color: #555; max-height: 48px; overflow: hidden; white-space: pre-wrap; word-break: break-all; }
+  .note-pin-badge { position: absolute; top: 6px; right: 6px; font-size: 12px; }
+  .note-edit-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); z-index: 8000; display: flex; align-items: center; justify-content: center; }
+  .note-edit-box { width: 92%; max-width: 460px; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
+  .note-edit-title { font-size: 16px; font-weight: bold; border: none; border-bottom: 2px solid #ddd; background: transparent; width: 100%; padding: 4px 0; outline: none; }
+  .note-edit-title:focus { border-bottom-color: #007bff; }
+  .note-edit-body { font-size: 14px; border: none; background: transparent; width: 100%; padding: 4px 0; outline: none; resize: none; min-height: 100px; }
+  .note-color-btn { width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; flex-shrink: 0; transition: transform 0.1s; }
+  .note-color-btn.selected { border-color: #333; transform: scale(1.2); }
+  .note-edit-actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 </style>
 </head>
 <body>
@@ -164,7 +185,7 @@
 <div class="top-controls" id="top-controls-normal">
     <button id="btn-menu" class="btn-top-menu" onclick="showTempTab()"><span>≡</span><span>業務</span><span id="badge-menu" class="nav-badge" style="display:none;">0</span></button>
     <button id="btn-db-toggle" class="btn-db" onclick="toggleDBMode()">🗄️</button>
-    <button id="btn-mode-toggle" class="btn-mode-toggle" onclick="showCompetitorTab()">アラート<span id="badge-comp" class="nav-badge" style="display:none;">0</span></button>
+    <button id="btn-mode-toggle" class="btn-mode-toggle" onclick="showCompetitorTab()">競合<span id="badge-comp" class="nav-badge" style="display:none;">0</span></button>
     <button class="btn-merge" onclick="toggleMergeView()">📑 画像化</button>
     <button class="btn-reset" onclick="showDeleteMenu()">🗑️</button>
 </div>
@@ -174,7 +195,7 @@
 </div>
 
 <div id="comp-check-mode-bar">
-    🔍 売価確認モード稼働中 — 変更対象商品をスキャン
+    🔍 競合対抗確認モード稼働中 — 変更対象商品をスキャン
     <button onclick="exitCompCheckMode()" style="margin-left:10px; background:#e94560; color:#fff; padding:4px 10px; font-size:11px; border-radius:4px; box-shadow:none;">終了</button>
 </div>
 <div id="comp-check-pending"></div>
@@ -204,7 +225,7 @@
                 <select id="merge-order-filter" style="padding:4px; display:none;"><option value="">全発注種別表示</option></select>
             </div>
             <div style="margin-bottom:10px; font-size:13px; display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
-                <label><input type="checkbox" id="merge-filter-pop"> 販促物のみ</label>
+                <label><input type="checkbox" id="merge-filter-pop"> POPのみ</label>
                 <label><input type="checkbox" id="merge-filter-order"> 発注・指数のみ</label>
                 <label><input type="checkbox" id="merge-sort-genre"> ジャンル順に並び替え</label>
             </div>
@@ -237,10 +258,48 @@
             </div>
             
             <div id="pop-options" style="display:none; flex-direction:column; gap:8px; margin-top:5px; width:100%; font-size:12px; background:#f8f9fa; padding:8px; border-radius:4px; border:1px solid #ddd; box-sizing:border-box;">
-                <div id="pop-items-wrap" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
-                    <!-- 動的に生成 -->
+                <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                    <div class="pop-sub-item">
+                        <label><input type="checkbox" class="prescan-pop-chk" value="5号" onchange="togglePopQtyBox(this)"> 5号</label>
+                        <div class="qty-box" style="display:none;"><button type="button" onclick="adjPopQty(this, -1)">-</button><span class="qty-val">1</span><button type="button" onclick="adjPopQty(this, 1)">+</button></div>
+                    </div>
+                    <div class="pop-sub-item">
+                        <label><input type="checkbox" class="prescan-pop-chk" value="6号" onchange="togglePopQtyBox(this)"> 6号</label>
+                        <div class="qty-box" style="display:none;"><button type="button" onclick="adjPopQty(this, -1)">-</button><span class="qty-val">1</span><button type="button" onclick="adjPopQty(this, 1)">+</button></div>
+                    </div>
+                    <div class="pop-sub-item">
+                        <label><input type="checkbox" class="prescan-pop-chk" value="7号" onchange="togglePopQtyBox(this)"> 7号</label>
+                        <div class="qty-box" style="display:none;"><button type="button" onclick="adjPopQty(this, -1)">-</button><span class="qty-val">1</span><button type="button" onclick="adjPopQty(this, 1)">+</button></div>
+                    </div>
+                    <div class="pop-sub-item">
+                        <label><input type="checkbox" class="prescan-pop-chk" value="8号" onchange="togglePopQtyBox(this)"> 8号</label>
+                        <div class="qty-box" style="display:none;"><button type="button" onclick="adjPopQty(this, -1)">-</button><span class="qty-val">1</span><button type="button" onclick="adjPopQty(this, 1)">+</button></div>
+                    </div>
+                    <div class="pop-sub-item">
+                        <label><input type="checkbox" class="prescan-pop-chk" value="9号" onchange="togglePopQtyBox(this)"> 9号</label>
+                        <div class="qty-box" style="display:none;"><button type="button" onclick="adjPopQty(this, -1)">-</button><span class="qty-val">1</span><button type="button" onclick="adjPopQty(this, 1)">+</button></div>
+                    </div>
+                    <div class="pop-sub-item">
+                        <label><input type="checkbox" class="prescan-pop-chk" value="A3" onchange="togglePopQtyBox(this)"> A3</label>
+                        <div class="qty-box" style="display:none;"><button type="button" onclick="adjPopQty(this, -1)">-</button><span class="qty-val">1</span><button type="button" onclick="adjPopQty(this, 1)">+</button></div>
+                    </div>
+                    <div class="pop-sub-item">
+                        <label><input type="checkbox" class="prescan-pop-chk" value="ポスター(A2)" onchange="togglePopQtyBox(this)"> ﾎﾟｽﾀｰ(A2)</label>
+                        <div class="qty-box" style="display:none;"><button type="button" onclick="adjPopQty(this, -1)">-</button><span class="qty-val">1</span><button type="button" onclick="adjPopQty(this, 1)">+</button></div>
+                    </div>
+                    <div class="pop-sub-item">
+                        <label><input type="checkbox" class="prescan-pop-chk" value="ポスター(A1)" onchange="togglePopQtyBox(this)"> ﾎﾟｽﾀｰ(A1)</label>
+                        <div class="qty-box" style="display:none;"><button type="button" onclick="adjPopQty(this, -1)">-</button><span class="qty-val">1</span><button type="button" onclick="adjPopQty(this, 1)">+</button></div>
+                    </div>
+                    <div class="pop-sub-item" style="border-color: #28a745; background: #e8f5e9; justify-content:center;">
+                        <label style="color: #28a745; margin-top:auto; margin-bottom:auto;"><input type="checkbox" class="prescan-pop-chk" value="競合" onchange="togglePopQtyBox(this)"> 競合</label>
+                        <div class="qty-box" style="display:none;"><span class="qty-val">1</span></div>
+                    </div>
+                    <div class="pop-sub-item" style="border-color: #e83e8c; background: #fff0f6; justify-content:center;">
+                        <label style="color: #e83e8c; margin-top:auto; margin-bottom:auto;"><input type="checkbox" class="prescan-pop-chk" value="最安売価のみ" onchange="togglePopQtyBox(this)"> 最安売価のみ</label>
+                        <div class="qty-box" style="display:none;"><span class="qty-val">1</span></div>
+                    </div>
                 </div>
-                <div style="font-size:10px; color:#aaa; text-align:center;">販促物種別は⚙️設定から追加・編集できます</div>
             </div>
             
             <div style="display:flex; flex-wrap:wrap; gap:5px; align-items:center; width:100%; justify-content:center; margin-top:5px;">
@@ -251,17 +310,75 @@
             </div>
 
             <div style="width:100%; margin-top:5px;">
-                <button class="btn-shinagire-toggle" onclick="toggleShinagire()">クイックジャンル ▼</button>
-                <div id="shinagire-area" style="display:none; flex-wrap:wrap; gap:5px; justify-content:center; margin-bottom:5px;" id="quick-genre-area">
-                    <!-- 動的に生成 -->
+                <button class="btn-shinagire-toggle" onclick="toggleShinagire()">品切品薄カテゴリを開く ▼</button>
+                <div id="shinagire-area" style="display:none; flex-wrap:wrap; gap:5px; justify-content:center; margin-bottom:5px;">
+                    <button class="shinagire-btn" onclick="setShinagire('1番')">1番</button>
+                    <button class="shinagire-btn" onclick="setShinagire('2番')">2番</button>
+                    <button class="shinagire-btn" onclick="setShinagire('3番')">3番</button>
+                    <button class="shinagire-btn" onclick="setShinagire('4番')">4番</button>
+                    <button class="shinagire-btn" onclick="setShinagire('5番')">5番</button>
+                    <button class="shinagire-btn" onclick="setShinagire('6番')">6番</button>
+                    <button class="shinagire-btn" onclick="setShinagire('米')">米</button>
+                    <button class="shinagire-btn" onclick="setShinagire('その他')">その他</button>
                 </div>
-                <div id="quick-genre-empty" style="display:none; font-size:11px; color:#aaa; text-align:center; padding:6px;">⚙️設定からクイックジャンルを追加できます</div>
             </div>
 
             <div style="display:flex; align-items:center; gap:5px; width: 100%; justify-content: center; margin-top: 5px;">
                 <input type="text" id="pre-genre" placeholder="ジャンル" style="width: 100px; padding: 4px;">
                 <input type="text" id="pre-memo" placeholder="コメント" style="width: 130px; padding: 4px;">
             </div>
+
+            <!-- カメラ詳細設定 -->
+            <details style="width:100%; border-top:1px solid #ddd; padding-top:10px; margin-top:5px;">
+              <summary style="font-size:11px; color:#aaa; cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; user-select:none;">
+                <span>📷 カメラ詳細設定</span>
+                <span id="cam-settings-summary" style="font-size:10px; color:#bbb;">デフォルト</span>
+              </summary>
+              <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+
+                <!-- プリセット選択 -->
+                <div style="display:flex; gap:6px;">
+                  <button id="preset-btn-default" onclick="selectPreset('default')"
+                    style="flex:1; padding:7px 4px; font-size:11px; font-weight:bold; border-radius:6px; border:2px solid #1a1a2e; background:#1a1a2e; color:#fff; cursor:pointer; box-shadow:none;">
+                    デフォルト
+                  </button>
+                  <button id="preset-btn-fast" onclick="selectPreset('fast')"
+                    style="flex:1; padding:7px 4px; font-size:11px; font-weight:bold; border-radius:6px; border:2px solid #ddd; background:#fff; color:#555; cursor:pointer; box-shadow:none;">
+                    読取最優先
+                  </button>
+                  <button id="preset-btn-custom" onclick="selectPreset('custom')"
+                    style="flex:1; padding:7px 4px; font-size:11px; font-weight:bold; border-radius:6px; border:2px solid #ddd; background:#fff; color:#555; cursor:pointer; box-shadow:none;">
+                    カスタム
+                  </button>
+                </div>
+
+                <!-- プリセット説明 -->
+                <div id="preset-desc" style="font-size:11px; color:#666; background:#f8f9fa; border-radius:6px; padding:8px 10px; line-height:1.7;">
+                  FPS: 5 / AF: 指定なし（html5-qrcodeのデフォルト値）
+                </div>
+
+                <!-- カスタム時のみ表示 -->
+                <div id="custom-controls" style="display:none; flex-direction:column; gap:8px;">
+                  <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <label style="font-weight:bold; color:#555; font-size:12px;">FPS</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <input type="range" id="setting-fps" min="3" max="30" step="1" value="10" style="width:100px;" oninput="onCustomChange()">
+                      <span id="label-fps" style="min-width:28px; text-align:right; font-weight:bold; font-size:13px;">10</span>
+                    </div>
+                  </div>
+                  <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <label style="font-weight:bold; color:#555; font-size:12px;">オートフォーカス</label>
+                    <select id="setting-focus" onchange="onCustomChange()" style="font-size:12px; padding:4px 6px;">
+                      <option value="continuous">continuous</option>
+                      <option value="auto">auto</option>
+                      <option value="none">指定なし</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button onclick="applyCamSettings()" style="background:#1a1a2e; color:#fff; border:none; border-radius:6px; padding:8px; font-size:13px; font-weight:bold; cursor:pointer; width:100%;">設定を適用（カメラ再起動）</button>
+              </div>
+            </details>
         </div>
     </div>
 
@@ -299,8 +416,8 @@
 </div>
 
 <div id="view-competitor-ui" style="display:none; max-width:500px; margin:0 auto; padding:15px; background:#fff; border-radius:8px; border:1px solid #ddd;">
-    <h3 style="margin-top:0; color:#dc3545;">📅 指定日アラート</h3>
-    <p style="font-size:12px; color:#666;">JANと予定日を登録しておくと、当日にアラートが出て履歴に自動追加されます。</p>
+    <h3 style="margin-top:0; color:#dc3545;">競合ヘッダー変更登録</h3>
+    <p style="font-size:12px; color:#666;">カメラでスキャンするか手入力でJANを登録してください。<br>指定日にアラートと同時に履歴に自動追加されます。</p>
     
     <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px;">
         <div style="display:flex; gap:5px; align-items:center;">
@@ -310,20 +427,20 @@
         </div>
         <div style="display:flex; gap:5px; align-items:center;">
             <span style="font-size:12px; font-weight:bold; width:50px; text-align:right;">JAN</span>
-            <input type="number" id="comp-jan" placeholder="JANコード（任意）" style="flex:2;" oninput="onCompJanInput(this.value)">
+            <input type="number" id="comp-jan" placeholder="JANコード" style="flex:2;" oninput="onCompJanInput(this.value)">
             <button onclick="startCompScan()" style="background:#17a2b8; padding:8px 12px;">📸</button>
         </div>
         <div style="display:flex; gap:5px; align-items:center;">
-            <span style="font-size:12px; font-weight:bold; width:50px; text-align:right;">内容</span>
-            <input type="text" id="comp-name" placeholder="アラート内容・商品名" style="flex:2;">
+            <span style="font-size:12px; font-weight:bold; width:50px; text-align:right;">商品名</span>
+            <input type="text" id="comp-name" placeholder="対象商品名" style="flex:2;">
         </div>
         <div style="display:flex; gap:5px; align-items:center;">
             <span style="font-size:12px; font-weight:bold; width:50px; text-align:right;">種別</span>
             <select id="comp-reason" style="flex:1;" onchange="document.getElementById('comp-reason-other').style.display=this.value==='その他'?'block':'none'">
-                <option value="価格変更">価格変更</option>
+                <option value="ヘッダー変更">ヘッダー変更</option>
+                <option value="売価変更">売価変更</option>
                 <option value="新規導入">新規導入</option>
                 <option value="廃番">廃番</option>
-                <option value="棚替え">棚替え</option>
                 <option value="その他">その他</option>
             </select>
         </div>
@@ -334,7 +451,7 @@
     </div>
 
     <div style="display:flex; gap:8px; margin-bottom:10px;">
-        <button onclick="toggleCompCheckMode()" id="btn-comp-check-mode" style="flex:1; background:#1a1a2e; color:#e94560; border:2px solid #e94560; font-size:12px; padding:8px;">🔍 売価確認モード</button>
+        <button onclick="toggleCompCheckMode()" id="btn-comp-check-mode" style="flex:1; background:#1a1a2e; color:#e94560; border:2px solid #e94560; font-size:12px; padding:8px;">🔍 競合対抗確認モード</button>
     </div>
     
     <ul id="comp-list" style="list-style:none; padding:0;"></ul>
@@ -342,8 +459,6 @@
 
 <div id="view-temp-ui" style="display:none; max-width:500px; margin:0 auto; padding:15px; background:#fff; border-radius:8px; border:1px solid #ddd;">
     <h3 style="margin-top:0; color:#333;">📦 業務・データ管理</h3>
-
-    <button onclick="showSettingsTab()" style="background:#6c757d; width:100%; margin-bottom:12px; font-size:13px; padding:10px;">⚙️ ツール設定</button>
 
     <div id="temp-summary"></div>
 
@@ -361,62 +476,100 @@
     </div>
 
     <button class="section-toggle-btn" onclick="toggleSection('customer-section', this)">
-        <span>📋 案件管理</span><span class="toggle-icon">▼</span>
+        <span>👤 客注管理</span><span class="toggle-icon">▼</span>
     </button>
     <div id="customer-section" style="display:none; flex-direction:column; gap:8px; margin-bottom:15px; font-size:12px; border:1px solid #ddd; padding:10px; border-radius:8px;">
 
+        <!-- 基本フィールド（常時表示） -->
+        <div style="display:flex; gap:5px; align-items:center;">JAN: <input type="number" id="cust-jan" style="flex:1;"> <button onclick="startSideScan('cust')" style="background:#17a2b8; padding:8px;">📸</button></div>
         <div style="display:flex; gap:5px; align-items:center;">
-            <span style="font-weight:bold; color:#dc3545;">*</span>案件名:
-            <input type="text" id="cust-name" style="flex:1;" placeholder="例: 〇〇商品 取り寄せ">
-        </div>
-        <div style="display:flex; gap:5px; align-items:center;">
-            ステータス:
-            <select id="cust-status" style="flex:1;">
-                <option value="未対応">未対応</option>
-                <option value="対応中">対応中</option>
-                <option value="完了">完了</option>
-            </select>
-        </div>
-        <div style="display:flex; gap:5px; align-items:center;">
-            期日: <input type="date" id="cust-arrival" style="flex:1;">
+            個数: <input type="number" id="cust-qty" style="width:60px;" value="1" min="1">
+            &nbsp;納品日: <input type="date" id="cust-arrival" style="flex:1;">
         </div>
 
-        <button type="button" onclick="toggleCustDetail(this)" style="background:none; border:1px dashed #ccc; color:#555; padding:5px 10px; border-radius:4px; font-size:11px; width:100%; text-align:left; box-shadow:none; display:flex; justify-content:space-between; align-items:center;">
-            <span>＋ 詳細を追加（JAN・メモ・電話番号）</span><span id="cust-detail-icon">▼</span>
-        </button>
-        <div id="cust-detail-fields" style="display:none; flex-direction:column; gap:8px; margin-top:4px; padding:8px; background:#f8f9fa; border-radius:6px; border:1px solid #eee;">
-            <div style="display:flex; gap:5px; align-items:center;">
-                JAN: <input type="number" id="cust-jan" style="flex:1;" placeholder="任意">
-                <button onclick="startSideScan('cust')" style="background:#17a2b8; padding:8px;">📸</button>
-            </div>
-            <div style="display:flex; gap:5px; align-items:center;">
-                メモ: <input type="text" id="cust-memo" style="flex:1;" placeholder="自由記述">
-            </div>
-            <div style="display:flex; gap:5px; align-items:center;">
-                電話番号: <input type="tel" id="cust-phone" style="flex:1;">
+        <!-- 詳細フィールド（アコーディオン） -->
+        <div>
+            <button type="button" onclick="toggleCustDetail(this)" style="background:none; border:1px dashed #ccc; color:#555; padding:5px 10px; border-radius:4px; font-size:11px; width:100%; text-align:left; box-shadow:none; display:flex; justify-content:space-between; align-items:center;">
+                <span>＋ 詳細を追加（商品名・ケース・受渡・電話・備考）</span><span id="cust-detail-icon">▼</span>
+            </button>
+            <div id="cust-detail-fields" style="display:none; flex-direction:column; gap:8px; margin-top:8px; padding:8px; background:#f8f9fa; border-radius:6px; border:1px solid #eee;">
+                <div style="display:flex; gap:5px; align-items:center;">商品名: <input type="text" id="cust-name" style="flex:1;" placeholder="任意"></div>
+                <div style="display:flex; gap:5px; align-items:center;">
+                    ケース数: <input type="number" id="cust-case" style="width:60px;" placeholder="0" min="0">
+                </div>
+                <div>
+                    <div style="margin-bottom:4px; font-weight:bold;">受渡日時 <span style="font-weight:normal; color:#888;">(任意)</span></div>
+                    <div style="display:flex; gap:5px; align-items:center; margin-bottom:4px;">
+                        <input type="date" id="cust-delivery-date" style="flex:1;">
+                    </div>
+                    <div class="time-picker-row" id="cust-time-picker">
+                        <button type="button" class="time-btn" data-val="開店" onclick="selectDeliveryTime(this)">開店</button>
+                        <button type="button" class="time-btn" data-val="午前" onclick="selectDeliveryTime(this)">午前</button>
+                        <button type="button" class="time-btn" data-val="午後" onclick="selectDeliveryTime(this)">午後</button>
+                        <button type="button" class="time-btn" data-val="夕方" onclick="selectDeliveryTime(this)">夕方</button>
+                        <button type="button" class="time-btn" data-val="夜" onclick="selectDeliveryTime(this)">夜</button>
+                        <button type="button" class="time-btn" data-val="指定" onclick="selectDeliveryTime(this)">時間指定</button>
+                        <button type="button" class="time-btn" data-val="" onclick="selectDeliveryTime(this)">指定なし</button>
+                    </div>
+                    <input type="time" id="cust-delivery-time-fine" style="display:none; margin-top:4px; width:100px; font-size:12px; padding:4px;">
+                </div>
+                <div style="display:flex; gap:5px; align-items:center;">電話番号: <input type="tel" id="cust-phone" style="flex:1;"></div>
+                <label><input type="checkbox" id="cust-will-call" style="transform:scale(1.2);" onchange="document.getElementById('cust-called-wrap').style.display=this.checked?'block':'none'"> 店舗到着時電話する</label>
+                <div id="cust-called-wrap" style="display:none; margin-left:15px; background:#f0f0f0; padding:5px; border-radius:4px;">
+                    <label><input type="checkbox" id="cust-called" style="transform:scale(1.2);"> 📞 電話対応済</label>
+                </div>
+                <div style="display:flex; gap:5px; align-items:center;">備考: <input type="text" id="cust-memo" style="flex:1;"></div>
             </div>
         </div>
 
+        <label><input type="checkbox" id="cust-ordered" style="transform:scale(1.2);"> 発注登録済</label>
         <button onclick="addCustomerItem()" style="background:#28a745; padding:10px; margin-top:2px; font-size:13px;">登録</button>
         
-        <div style="display:flex; gap:8px; align-items:center; margin-top:5px; flex-wrap:wrap;">
-            <span style="font-size:11px; font-weight:bold;">表示:</span>
-            <button type="button" id="cust-filter-all" onclick="setCustFilter('all')" class="time-btn selected">全て</button>
-            <button type="button" id="cust-filter-open" onclick="setCustFilter('open')" class="time-btn">未完了</button>
-            <button type="button" id="cust-filter-done" onclick="setCustFilter('done')" class="time-btn">完了</button>
-            <span style="font-size:11px; font-weight:bold; margin-left:4px;">並び:</span>
-            <button type="button" id="cust-sort-arrival" onclick="setCustSort('arrival')" class="time-btn selected">期日順</button>
-            <button type="button" id="cust-sort-delivery" onclick="setCustSort('delivery')" class="time-btn">登録順</button>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:5px;">
+            <span style="font-size:11px; font-weight:bold;">並び順:</span>
+            <button type="button" id="cust-sort-arrival" onclick="setCustSort('arrival')" class="time-btn selected">納品日順</button>
+            <button type="button" id="cust-sort-delivery" onclick="setCustSort('delivery')" class="time-btn">受渡順</button>
         </div>
         
         <ul id="cust-list" style="list-style:none; padding:0; margin-top:10px; text-align:left;"></ul>
     </div>
 
+    <button class="section-toggle-btn" onclick="toggleSection('notes-section', this); refreshNotesList();">
+        <span>📝 メモ</span><span class="toggle-icon">▼</span>
+    </button>
+    <div id="notes-section" style="display:none; flex-direction:column; gap:8px; margin-bottom:15px; border:1px solid #ddd; padding:10px; border-radius:8px;">
+        <div style="display:flex; gap:6px; align-items:center;">
+            <input type="text" id="note-new-title" placeholder="タイトルを入力して追加" maxlength="60"
+                style="flex:1; font-size:13px; padding:8px; border:1px solid #ccc; border-radius:6px;"
+                onkeydown="if(event.key==='Enter') openNoteNew()">
+            <button onclick="openNoteNew()" style="background:#007bff; padding:8px 14px; font-size:13px; border-radius:6px; white-space:nowrap;">＋ 追加</button>
+        </div>
+        <div class="notes-grid" id="notes-grid">
+            <div style="grid-column:1/-1; color:#aaa; font-size:12px; text-align:center; padding:16px 0;">メモはまだありません</div>
+        </div>
+    </div>
+
+    <button class="section-toggle-btn" onclick="toggleSection('reminder-section', this); refreshReminderList();">
+        <span>⏰ スケジュールリマインダー</span><span class="toggle-icon">▼</span>
+    </button>
+    <div id="reminder-section" style="display:none; flex-direction:column; gap:8px; margin-bottom:15px; font-size:12px; border:1px solid #ddd; padding:10px; border-radius:8px;">
+        <div style="color:#555; font-size:11px; margin-bottom:4px;">指定した日時になると、履歴欄の先頭にメモが表示されます。<br>※アプリを開いている間のみ発火します（1分毎にチェック）</div>
+        <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+            <span style="font-weight:bold; white-space:nowrap;">日時:</span>
+            <input type="datetime-local" id="reminder-datetime" style="flex:1; min-width:180px;">
+        </div>
+        <div style="display:flex; gap:5px; align-items:center;">
+            <span style="font-weight:bold; white-space:nowrap;">メモ:</span>
+            <input type="text" id="reminder-memo" placeholder="表示するメモ内容" style="flex:1;">
+        </div>
+        <button onclick="addReminder()" style="background:#007bff; padding:8px; margin-top:4px;">登録</button>
+        <ul id="reminder-list" style="list-style:none; padding:0; margin-top:4px;"></ul>
+    </div>
+
     <button class="section-toggle-btn" onclick="toggleSection('backup-section', this)">
         <span>💾 データ管理・バックアップ</span><span class="toggle-icon">▼</span>
     </button>
-    <div id="backup-section" style="display:none; padding-top:10px; text-align:left;" data-display-type="block">
-        <div id="storage-meter-wrap">
+    <div id="backup-section" style="display:none; padding-top:10px; text-align:left;" data-display-type="block">        <div id="storage-meter-wrap">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-weight:bold; color:#333;">💾 ストレージ使用量</span>
                 <span id="storage-label" style="color:#555;">計算中...</span>
@@ -435,10 +588,10 @@
             <div style="font-size:12px; color:#555; margin-bottom:8px;">履歴データをURLに変換して第三者用ツールと共有します。</div>
 
             <div style="background:#fff; border:1px solid #b8daff; border-radius:6px; padding:8px 10px; margin-bottom:8px;">
-                <div style="font-size:11px; color:#666; margin-bottom:5px; font-weight:bold;">📲 第三者用スキャンツール</div>
+                <div style="font-size:11px; color:#666; margin-bottom:5px; font-weight:bold;">📲 第三者用ツール（棚番長 共有）</div>
                 <div style="font-size:11px; color:#888; margin-bottom:6px;">このURLを相手にLINEで送るとスキャンツールとして使えます</div>
                 <div style="display:flex; gap:6px;">
-                    <input type="text" id="share-tool-url" readonly style="flex:1; font-size:11px; padding:5px; background:#f8f9fa; font-family:monospace;">
+                    <input type="text" id="share-tool-url" readonly value="https://kanpatip2.github.io/tanabancho/share.html" style="flex:1; font-size:11px; padding:5px; background:#f8f9fa; font-family:monospace;">
                     <button onclick="copyShareToolURL()" style="flex:0 0 60px; background:#17a2b8; font-size:12px; padding:6px;">📋 コピー</button>
                 </div>
             </div>
@@ -447,8 +600,9 @@
             <div id="share-url-box" style="display:none; flex-direction:column; gap:6px;">
                 <textarea id="share-url-text" readonly style="width:100%; height:60px; font-size:11px; border:1px solid #ccc; border-radius:4px; padding:6px; box-sizing:border-box; resize:none; font-family:monospace;"></textarea>
                 <div style="display:flex; gap:6px;">
-                    <button onclick="copyShareURL()" style="flex:1; background:#28a745; font-size:12px; padding:8px;">📋 コピー</button>
-                    <button onclick="document.getElementById('share-url-box').style.display='none'" style="flex:0 0 60px; background:#6c757d; font-size:12px; padding:8px;">閉じる</button>
+                    <button onclick="shareMainURL()" style="flex:1; background:#28a745; font-size:12px; padding:8px;">📤 LINEで送る</button>
+                    <button onclick="copyShareURL()" style="flex:1; background:#17a2b8; font-size:12px; padding:8px;">📋 コピー</button>
+                    <button onclick="document.getElementById('share-url-box').style.display='none'" style="flex:0 0 50px; background:#6c757d; font-size:12px; padding:8px;">閉じる</button>
                 </div>
                 <div id="share-url-warning" style="font-size:11px; color:#856404; display:none; background:#fff3cd; padding:5px 8px; border-radius:4px;"></div>
             </div>
@@ -469,56 +623,6 @@
                 <button style="background:#007bff; padding:8px;" onclick="exportSelected()">☑ 選択したデータをバックアップ</button>
             </div>
         </div>
-    </div>
-</div>
-
-<div id="view-settings-ui" style="display:none; max-width:500px; margin:0 auto; padding:15px; background:#fff; border-radius:8px; border:1px solid #ddd;">
-    <h3 style="margin-top:0; color:#333;">⚙️ ツール設定</h3>
-
-    <div style="display:flex; flex-direction:column; gap:16px;">
-
-        <!-- ラベルカスタマイズ -->
-        <div style="background:#f8f9fa; border-radius:8px; padding:12px; border:1px solid #ddd;">
-            <div style="font-weight:bold; font-size:13px; margin-bottom:10px; color:#333;">🏷️ ラベル名カスタマイズ</div>
-            <div style="display:flex; flex-direction:column; gap:8px; font-size:12px;">
-                <div style="display:flex; gap:5px; align-items:center;">
-                    <span style="width:80px; color:#555;">販促物名称</span>
-                    <input type="text" id="setting-pop-label" placeholder="例: POP、販促物、ラベル" style="flex:1; font-size:12px; padding:6px;">
-                </div>
-                <div style="display:flex; gap:5px; align-items:center;">
-                    <span style="width:80px; color:#555;">案件管理名</span>
-                    <input type="text" id="setting-cust-label" placeholder="例: 案件管理、取り寄せ" style="flex:1; font-size:12px; padding:6px;">
-                </div>
-                <div style="display:flex; gap:5px; align-items:center;">
-                    <span style="width:80px; color:#555;">アラート名</span>
-                    <input type="text" id="setting-comp-label" placeholder="例: 指定日アラート" style="flex:1; font-size:12px; padding:6px;">
-                </div>
-            </div>
-            <button onclick="saveLabels()" style="background:#007bff; width:100%; margin-top:10px; padding:8px; font-size:12px;">保存</button>
-        </div>
-
-        <!-- 販促物種別 -->
-        <div style="background:#f8f9fa; border-radius:8px; padding:12px; border:1px solid #ddd;">
-            <div style="font-weight:bold; font-size:13px; margin-bottom:6px; color:#333;">📄 販促物種別</div>
-            <div style="font-size:11px; color:#888; margin-bottom:8px;">スキャン前設定の「販促物」チェックボックスに表示される種別です</div>
-            <div id="pop-settings-list" style="display:flex; flex-direction:column; gap:4px; margin-bottom:8px;"></div>
-            <div style="display:flex; gap:5px;">
-                <input type="text" id="new-pop-item" placeholder="種別名を追加 (例: A4)" style="flex:1; font-size:12px; padding:6px;">
-                <button onclick="addPopSetting()" style="background:#28a745; padding:6px 12px; font-size:12px;">追加</button>
-            </div>
-        </div>
-
-        <!-- クイックジャンル -->
-        <div style="background:#f8f9fa; border-radius:8px; padding:12px; border:1px solid #ddd;">
-            <div style="font-weight:bold; font-size:13px; margin-bottom:6px; color:#333;">⚡ クイックジャンル</div>
-            <div style="font-size:11px; color:#888; margin-bottom:8px;">スキャン前設定のワンタップジャンルボタンです</div>
-            <div id="quick-genre-settings-list" style="display:flex; flex-direction:column; gap:4px; margin-bottom:8px;"></div>
-            <div style="display:flex; gap:5px;">
-                <input type="text" id="new-quick-genre" placeholder="ジャンル名を追加" style="flex:1; font-size:12px; padding:6px;">
-                <button onclick="addQuickGenre()" style="background:#28a745; padding:6px 12px; font-size:12px;">追加</button>
-            </div>
-        </div>
-
     </div>
 </div>
 
@@ -563,6 +667,7 @@
             <div id="zoom-memo"></div>
         </div>
         <button id="btn-add-from-zoom">履歴に追加</button>
+        <button id="btn-delete-from-zoom" onclick="deleteFromZoom()" style="margin-top:10px; padding:10px; background:#dc3545; width:100%; font-size:14px; display:none;">🗑️ この履歴を削除</button>
         <div style="display:flex; gap:10px; align-items:center; justify-content:center; margin-top:14px;">
             <button id="btn-zoom-prev" onclick="navigateZoom(-1)" style="background:#444; color:#fff; padding:8px 18px; font-size:18px; border-radius:8px; display:none;">◀</button>
             <span id="zoom-nav-label" style="color:#aaa; font-size:12px;">枠外タップで閉じる</span>
@@ -594,31 +699,14 @@
 </div>
 
 <script>
-    let scanList = JSON.parse(localStorage.getItem("sellfloor_list")) || [];
-    let productDB = JSON.parse(localStorage.getItem("sellfloor_db")) || {};
-    let compList = JSON.parse(localStorage.getItem("sellfloor_comp")) || [];
-    let returnList = JSON.parse(localStorage.getItem("sellfloor_return")) || [];
-    let customerOrderList = JSON.parse(localStorage.getItem("sellfloor_cust")) || [];
+    let scanList = JSON.parse(localStorage.getItem("barcode_master_list")) || [];
+    let productDB = JSON.parse(localStorage.getItem("barcode_master_db")) || {};
+    let compList = JSON.parse(localStorage.getItem("barcode_master_comp")) || [];
+    let returnList = JSON.parse(localStorage.getItem("barcode_master_return")) || [];
+    let customerOrderList = JSON.parse(localStorage.getItem("barcode_master_cust")) || [];
+    let reminderList = JSON.parse(localStorage.getItem("barcode_master_reminders")) || [];
+    let notesList = JSON.parse(localStorage.getItem("barcode_master_notes")) || [];
     
-    // ===== 設定データ =====
-    let appSettings = JSON.parse(localStorage.getItem("sellfloor_settings")) || {
-        popItems: [],        // 販促物種別（初期値空）
-        quickGenres: [],     // クイックジャンル（初期値空）
-        labels: {
-            pop: '販促物',
-            cust: '案件管理',
-            comp: '指定日アラート'
-        }
-    };
-    // 旧バージョンからの移行: popItemsが空で旧データがあれば空のまま維持
-    if (!appSettings.labels) appSettings.labels = { pop: '販促物', cust: '案件管理', comp: '指定日アラート' };
-    if (!appSettings.popItems) appSettings.popItems = [];
-    if (!appSettings.quickGenres) appSettings.quickGenres = [];
-
-    function saveSettings() {
-        localStorage.setItem("sellfloor_settings", JSON.stringify(appSettings));
-    }
-
     for (let key in productDB) {
         if (typeof productDB[key] === 'string') { 
             productDB[key] = { name: productDB[key], lastUsed: Date.now(), boxJan: "" }; 
@@ -632,39 +720,32 @@
     let activeCompScan = false;
     let activeSideScanType = null;
     
-    let isSelectionMode = false;
+    let isSelectionMode = false; // バックアップ用
     let selectedItems = new Set();
     
-    let isMergeSelectionMode = false;
+    let isMergeSelectionMode = false; // 画像化用
     let selectedMergeItems = new Set(); 
     
     let selectedDBItems = new Set(); 
     let deletedItem = null;
     let deletedIndex = -1;
     let currentMode = 'history';
-    let isTallMode = false;
-    let isCompCheckMode = false;
-    let custSortMode = 'arrival';
-    let custFilterMode = 'all';
-    let selectedDeliveryTime = '';
+    let isTallMode = false;       // 縦長バーコードモード
+    let isCompCheckMode = false;  // 競合対抗確認モード
+    let custSortMode = 'arrival'; // 客注並び順
+    let selectedDeliveryTime = ''; // 受渡時間選択
 
     window.addEventListener('load', () => {
-        // 共有ツールURLを動的生成（どの環境でも正しいURLになる）
-        const shareToolUrl = location.href.replace(/index\.html.*$/, '').replace(/\/$/, '') + '/share.html';
-        const urlInput = document.getElementById('share-tool-url');
-        if (urlInput) urlInput.value = shareToolUrl;
-
-        applyLabels();
-        renderPopItemsPrescan();
-        renderQuickGenres();
         refreshHistoryUI();
         refreshCompUI();
         refreshSideLists();
         updateFilterOptions();
         checkAlerts();
+        checkReminders();
         updateNavBadges();
         setTimeout(startCamera, 800);
         checkExpiry();
+        setInterval(checkReminders, 60000);
     });
 
     document.addEventListener("visibilitychange", () => {
@@ -678,195 +759,6 @@
             }, 300);
         }
     });
-
-    // ===== 設定機能 =====
-    function applyLabels() {
-        const l = appSettings.labels;
-        // スキャン前設定のPOPラベル
-        const popChk = document.getElementById('pre-pop');
-        if (popChk && popChk.parentElement) {
-            const lbl = popChk.parentElement.childNodes;
-            lbl[lbl.length-1].textContent = ' ' + (l.pop || '販促物');
-        }
-        // 業務タブの案件管理ラベル
-        const custSec = document.querySelectorAll('#view-temp-ui .section-toggle-btn span:first-child');
-        custSec.forEach(span => {
-            if (span.textContent.includes('案件') || span.textContent.includes(l.cust || '案件管理')) {
-                span.textContent = '📋 ' + (l.cust || '案件管理');
-            }
-        });
-        // アラートボタン（2行表示）
-        const compBtn = document.getElementById('btn-mode-toggle');
-        const badge = document.getElementById('badge-comp');
-        if (compBtn) {
-            const label = l.comp || '指定日アラート';
-            // デフォルト「指定日アラート」は「指定日」「アラート」で2行
-            // それ以外は中央で2分割
-            let line1, line2;
-            if (label === '指定日アラート') {
-                line1 = '指定日'; line2 = 'アラート';
-            } else if (label.length <= 4) {
-                line1 = label; line2 = '';
-            } else {
-                const mid = Math.ceil(label.length / 2);
-                line1 = label.slice(0, mid); line2 = label.slice(mid);
-            }
-            compBtn.innerHTML = line2
-                ? `<span>${line1}</span><span>${line2}</span>`
-                : label;
-            if (badge) compBtn.appendChild(badge);
-        }
-    }
-
-    function renderPopItemsPrescan() {
-        const wrap = document.getElementById('pop-items-wrap');
-        if (!wrap) return;
-        wrap.innerHTML = '';
-        if (appSettings.popItems.length === 0) {
-            wrap.innerHTML = '<div style="font-size:11px; color:#aaa; text-align:center; padding:8px; width:100%;">⚙️設定から販促物種別を追加してください</div>';
-            return;
-        }
-        appSettings.popItems.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'pop-sub-item';
-            div.innerHTML = `
-                <label><input type="checkbox" class="prescan-pop-chk" value="${item}" onchange="togglePopQtyBox(this)"> ${item}</label>
-                <div class="qty-box" style="display:none;"><button type="button" onclick="adjPopQty(this,-1)">-</button><span class="qty-val">1</span><button type="button" onclick="adjPopQty(this,1)">+</button></div>
-            `;
-            wrap.appendChild(div);
-        });
-    }
-
-    function renderQuickGenres() {
-        const area = document.getElementById('shinagire-area');
-        const empty = document.getElementById('quick-genre-empty');
-        if (!area) return;
-        area.innerHTML = '';
-        if (appSettings.quickGenres.length === 0) {
-            if (empty) empty.style.display = 'block';
-            return;
-        }
-        if (empty) empty.style.display = 'none';
-        appSettings.quickGenres.forEach(g => {
-            const btn = document.createElement('button');
-            btn.className = 'shinagire-btn';
-            btn.textContent = g;
-            btn.onclick = () => setShinagire(g);
-            area.appendChild(btn);
-        });
-    }
-
-    function showSettingsTab() {
-        currentMode = 'settings';
-        document.getElementById('view-history-ui').style.display = 'none';
-        document.getElementById('view-competitor-ui').style.display = 'none';
-        document.getElementById('view-db-ui').style.display = 'none';
-        document.getElementById('view-temp-ui').style.display = 'none';
-        document.getElementById('view-settings-ui').style.display = 'block';
-        document.getElementById('top-controls-normal').style.display = 'none';
-        document.getElementById('top-controls-back').style.display = 'flex';
-        if (isCameraRunning) forceStopCamera();
-        document.getElementById('cam-container').style.display = 'none';
-        renderSettingsUI();
-    }
-
-    function renderSettingsUI() {
-        // ラベル入力値セット
-        document.getElementById('setting-pop-label').value = appSettings.labels.pop || '販促物';
-        document.getElementById('setting-cust-label').value = appSettings.labels.cust || '案件管理';
-        document.getElementById('setting-comp-label').value = appSettings.labels.comp || '指定日アラート';
-
-        // 販促物種別リスト
-        const popList = document.getElementById('pop-settings-list');
-        popList.innerHTML = '';
-        appSettings.popItems.forEach((item, i) => {
-            const row = document.createElement('div');
-            row.style.cssText = 'display:flex; gap:5px; align-items:center;';
-            row.innerHTML = `
-                <span style="flex:1; font-size:12px; padding:5px 8px; background:#fff; border:1px solid #ddd; border-radius:4px;">${item}</span>
-                <button onclick="removePopSetting(${i})" style="background:#dc3545; padding:4px 8px; font-size:11px;">削除</button>
-            `;
-            popList.appendChild(row);
-        });
-        if (appSettings.popItems.length === 0) {
-            popList.innerHTML = '<div style="font-size:11px; color:#aaa; padding:4px;">まだ追加されていません</div>';
-        }
-
-        // クイックジャンルリスト
-        const qgList = document.getElementById('quick-genre-settings-list');
-        qgList.innerHTML = '';
-        appSettings.quickGenres.forEach((g, i) => {
-            const row = document.createElement('div');
-            row.style.cssText = 'display:flex; gap:5px; align-items:center;';
-            row.innerHTML = `
-                <span style="flex:1; font-size:12px; padding:5px 8px; background:#fff; border:1px solid #ddd; border-radius:4px;">${g}</span>
-                <button onclick="removeQuickGenre(${i})" style="background:#dc3545; padding:4px 8px; font-size:11px;">削除</button>
-            `;
-            qgList.appendChild(row);
-        });
-        if (appSettings.quickGenres.length === 0) {
-            qgList.innerHTML = '<div style="font-size:11px; color:#aaa; padding:4px;">まだ追加されていません</div>';
-        }
-    }
-
-    function saveLabels() {
-        appSettings.labels.pop = document.getElementById('setting-pop-label').value.trim() || '販促物';
-        appSettings.labels.cust = document.getElementById('setting-cust-label').value.trim() || '案件管理';
-        appSettings.labels.comp = document.getElementById('setting-comp-label').value.trim() || '指定日アラート';
-        saveSettings();
-        applyLabels();
-        showToast('ラベルを保存しました', false);
-    }
-
-    function addPopSetting() {
-        const input = document.getElementById('new-pop-item');
-        const val = input.value.trim();
-        if (!val) return;
-        if (appSettings.popItems.includes(val)) { showToast('既に存在します', true); return; }
-        appSettings.popItems.push(val);
-        saveSettings();
-        renderSettingsUI();
-        renderPopItemsPrescan();
-        input.value = '';
-        showToast(`「${val}」を追加しました`, false);
-    }
-
-    function removePopSetting(i) {
-        appSettings.popItems.splice(i, 1);
-        saveSettings();
-        renderSettingsUI();
-        renderPopItemsPrescan();
-    }
-
-    function addQuickGenre() {
-        const input = document.getElementById('new-quick-genre');
-        const val = input.value.trim();
-        if (!val) return;
-        if (appSettings.quickGenres.includes(val)) { showToast('既に存在します', true); return; }
-        appSettings.quickGenres.push(val);
-        saveSettings();
-        renderSettingsUI();
-        renderQuickGenres();
-        input.value = '';
-        showToast(`「${val}」を追加しました`, false);
-    }
-
-    function removeQuickGenre(i) {
-        appSettings.quickGenres.splice(i, 1);
-        saveSettings();
-        renderSettingsUI();
-        renderQuickGenres();
-    }
-
-    // ===== 案件管理（新設計） =====
-    function setCustFilter(mode) {
-        custFilterMode = mode;
-        ['all','open','done'].forEach(m => {
-            const btn = document.getElementById('cust-filter-' + m);
-            if (btn) btn.classList.toggle('selected', m === mode);
-        });
-        refreshSideLists();
-    }
 
     function toggleSection(sectionId, btn) {
         const section = document.getElementById(sectionId);
@@ -977,6 +869,8 @@
         
         document.getElementById('return-section').style.display = 'none';
         document.getElementById('customer-section').style.display = 'none';
+        document.getElementById('notes-section').style.display = 'none';
+        document.getElementById('reminder-section').style.display = 'none';
         document.querySelectorAll('#view-temp-ui .section-toggle-btn .toggle-icon').forEach(icon => icon.innerText = '▼');
 
         activeCompScan = false; activeSideScanType = null;
@@ -1014,34 +908,28 @@
     }
 
     function addCustomerItem() {
-        const name = document.getElementById('cust-name').value.trim();
-        if (!name) return alert("案件名を入力してください");
-        const status = document.getElementById('cust-status').value;
+        const jan = document.getElementById('cust-jan').value;
+        const ordered = document.getElementById('cust-ordered').checked;
         const arrival = document.getElementById('cust-arrival').value;
-        const jan = document.getElementById('cust-jan') ? document.getElementById('cust-jan').value : '';
-        const memo = document.getElementById('cust-memo') ? document.getElementById('cust-memo').value : '';
-        const phone = document.getElementById('cust-phone') ? document.getElementById('cust-phone').value : '';
-        customerOrderList.push({
-            id: Date.now(), name, status, arrivalDate: arrival,
-            jan, memo, phone,
-            addedToHistory: false, dismissed: false
-        });
+        const delivery = document.getElementById('cust-delivery').value;
+        const phone = document.getElementById('cust-phone').value;
+        const willCall = document.getElementById('cust-will-call').checked;
+        const called = document.getElementById('cust-called').checked;
+        const memo = document.getElementById('cust-memo').value;
+        if(!jan) return alert("JANを入力してください");
+        customerOrderList.push({ id: Date.now(), jan, ordered, arrivalDate: arrival, deliveryDate: delivery, phone, willCall, called, memo, dismissedArrival: false, dismissedDelivery: false });
         saveSideData(); refreshSideLists();
-        document.getElementById('cust-name').value = '';
-        document.getElementById('cust-arrival').value = '';
-        document.getElementById('cust-status').value = '未対応';
-        if (document.getElementById('cust-jan')) document.getElementById('cust-jan').value = '';
-        if (document.getElementById('cust-memo')) document.getElementById('cust-memo').value = '';
-        if (document.getElementById('cust-phone')) document.getElementById('cust-phone').value = '';
-        // 詳細アコーディオンを閉じる
-        const df = document.getElementById('cust-detail-fields');
-        const di = document.getElementById('cust-detail-icon');
-        if (df) df.style.display = 'none';
-        if (di) di.textContent = '▼';
-        showToast("案件を登録しました", false);
+        document.getElementById('cust-jan').value = ''; document.getElementById('cust-memo').value = '';
+        showToast("客注予定を追加しました", false);
     }
 
-    function selectDeliveryTime(btn) { /* 旧客注用・互換維持 */ }
+    function selectDeliveryTime(btn) {
+        document.querySelectorAll('#cust-time-picker .time-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedDeliveryTime = btn.dataset.val;
+        const fineInput = document.getElementById('cust-delivery-time-fine');
+        fineInput.style.display = selectedDeliveryTime === '指定' ? 'inline-block' : 'none';
+    }
 
     function setCustSort(mode) {
         custSortMode = mode;
@@ -1050,19 +938,70 @@
         refreshSideLists();
     }
 
+    function addCustomerItem() {
+        const jan = document.getElementById('cust-jan').value;
+        const name = document.getElementById('cust-name').value.trim();
+        const qty = parseInt(document.getElementById('cust-qty').value) || 1;
+        const caseQty = parseInt(document.getElementById('cust-case').value) || 0;
+        const ordered = document.getElementById('cust-ordered').checked;
+        const arrival = document.getElementById('cust-arrival').value;
+        const delivDate = document.getElementById('cust-delivery-date').value;
+        let delivTime = selectedDeliveryTime;
+        if (delivTime === '指定') {
+            const fine = document.getElementById('cust-delivery-time-fine').value;
+            delivTime = fine || '指定';
+        }
+        const phone = document.getElementById('cust-phone').value;
+        const willCall = document.getElementById('cust-will-call').checked;
+        const called = document.getElementById('cust-called').checked;
+        const memo = document.getElementById('cust-memo').value;
+        if(!jan) return alert("JANを入力してください");
+        customerOrderList.push({ 
+            id: Date.now(), jan, name, qty, caseQty, ordered, 
+            arrivalDate: arrival, deliveryDate: delivDate, deliveryTime: delivTime,
+            phone, willCall, called, memo, 
+            dismissedArrival: false, dismissedDelivery: false,
+            addedToHistory: false
+        });
+        saveSideData(); refreshSideLists();
+        // 電話番号リセット、その他のフィールドはリセット
+        document.getElementById('cust-jan').value = '';
+        document.getElementById('cust-name').value = '';
+        document.getElementById('cust-qty').value = '1';
+        document.getElementById('cust-case').value = '';
+        document.getElementById('cust-memo').value = '';
+        document.getElementById('cust-phone').value = '';
+        document.getElementById('cust-ordered').checked = false;
+        document.getElementById('cust-will-call').checked = false;
+        document.getElementById('cust-called').checked = false;
+        document.getElementById('cust-called-wrap').style.display = 'none';
+        document.getElementById('cust-arrival').value = '';
+        document.getElementById('cust-delivery-date').value = '';
+        document.getElementById('cust-delivery-time-fine').style.display = 'none';
+        document.querySelectorAll('#cust-time-picker .time-btn').forEach(b => b.classList.remove('selected'));
+        selectedDeliveryTime = '';
+        // 詳細アコーディオンを閉じる
+        const detailFields = document.getElementById('cust-detail-fields');
+        const detailIcon = document.getElementById('cust-detail-icon');
+        if (detailFields) { detailFields.style.display = 'none'; }
+        if (detailIcon) { detailIcon.textContent = '▼'; }
+        const detailBtn = detailFields ? detailFields.previousElementSibling : null;
+        if (detailBtn) detailBtn.querySelector('span:first-child').textContent = '＋ 詳細を追加（商品名・ケース・受渡・電話・備考）';
+        showToast("客注を登録しました", false);
+    }
+
     function toggleCustDetail(btn) {
         const fields = document.getElementById('cust-detail-fields');
         const icon = document.getElementById('cust-detail-icon');
         const label = btn.querySelector('span:first-child');
-        if (!fields) return;
         if (fields.style.display === 'none' || fields.style.display === '') {
             fields.style.display = 'flex';
-            if (icon) icon.textContent = '▲';
-            if (label) label.textContent = '－ 詳細を閉じる';
+            icon.textContent = '▲';
+            label.textContent = '－ 詳細を閉じる';
         } else {
             fields.style.display = 'none';
-            if (icon) icon.textContent = '▼';
-            if (label) label.textContent = '＋ 詳細を追加（JAN・メモ・電話番号）';
+            icon.textContent = '▼';
+            label.textContent = '＋ 詳細を追加（商品名・ケース・受渡・電話・備考）';
         }
     }
 
@@ -1076,15 +1015,10 @@
         const item = customerOrderList.find(c => c.id === id);
         if(item) { item.ordered = isChecked; saveSideData(); refreshSideLists(); }
     }
-
+    
     function toggleCustCalled(id, isChecked) {
         const item = customerOrderList.find(c => c.id === id);
         if(item) { item.called = isChecked; saveSideData(); refreshSideLists(); }
-    }
-
-    function updateCustStatus(id, newStatus) {
-        const item = customerOrderList.find(c => c.id === id);
-        if (item) { item.status = newStatus; saveSideData(); refreshSideLists(); }
     }
 
     function toggleCustEdit(id) {
@@ -1096,35 +1030,37 @@
         const item = customerOrderList.find(c => c.id === id);
         if (!item) return;
         const nameEl = document.getElementById(`cust-edit-name-${id}`);
-        const statusEl = document.getElementById(`cust-edit-status-${id}`);
+        const qtyEl = document.getElementById(`cust-edit-qty-${id}`);
+        const caseEl = document.getElementById(`cust-edit-case-${id}`);
         const arrEl = document.getElementById(`cust-edit-arr-${id}`);
-        const janEl = document.getElementById(`cust-edit-jan-${id}`);
+        const deldEl = document.getElementById(`cust-edit-deld-${id}`);
+        const deltEl = document.getElementById(`cust-edit-delt-${id}`);
         const memoEl = document.getElementById(`cust-edit-memo-${id}`);
-        const phoneEl = document.getElementById(`cust-edit-phone-${id}`);
         if (nameEl) item.name = nameEl.value.trim();
-        if (statusEl) item.status = statusEl.value;
+        if (qtyEl) item.qty = parseInt(qtyEl.value) || 1;
+        if (caseEl) item.caseQty = parseInt(caseEl.value) || 0;
         if (arrEl) item.arrivalDate = arrEl.value;
-        if (janEl) item.jan = janEl.value;
+        if (deldEl) item.deliveryDate = deldEl.value;
+        if (deltEl) item.deliveryTime = deltEl.value;
         if (memoEl) item.memo = memoEl.value;
-        if (phoneEl) item.phone = phoneEl.value;
         saveSideData(); refreshSideLists();
-        showToast("案件を更新しました", false);
+        showToast("客注を更新しました", false);
     }
 
     function addCustToHistory(id) {
         const c = customerOrderList.find(x => x.id === id);
-        if (!c || !c.jan) { showToast("JANが登録されていません", true); return; }
+        if (!c) return;
         if (isDuplicate(c.jan)) { showToast("⚠️ 既に履歴に存在します", true); return; }
         const nowStr = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
         const newId = "cust" + Date.now().toString() + Math.random().toString(36).substr(2,5);
         scanList.unshift({
             id: newId, code: c.jan, time: nowStr, productName: c.name || '',
-            memo: c.memo || '', genre: '案件', pop: false, popDetails: [], end: false, order: [],
+            memo: c.memo || '', genre: '客注', pop: false, popDetails: [], end: false, order: [],
             expiry: '', isNoLearn: false, boxJan: '', initialEdit: false, isProtected: false
         });
         c.addedToHistory = true;
         saveData(); saveSideData(); refreshHistoryUI(); refreshSideLists(); updateFilterOptions();
-        showToast("案件を履歴に追加しました", false);
+        showToast("客注を履歴に追加しました", false);
     }
 
     function refreshSideLists() {
@@ -1143,81 +1079,94 @@
 
         const cList = document.getElementById('cust-list'); cList.innerHTML = '';
         let sortedCust = [...customerOrderList];
-
-        // フィルタ
-        if (custFilterMode === 'open') sortedCust = sortedCust.filter(c => c.status !== '完了');
-        else if (custFilterMode === 'done') sortedCust = sortedCust.filter(c => c.status === '完了');
-
-        // ソート
         if (custSortMode === 'delivery') {
-            sortedCust.sort((a, b) => (b.id - a.id)); // 登録順（新しい順）
+            sortedCust.sort((a, b) => {
+                const ad = (a.deliveryDate || '9999') + (a.deliveryTime || '');
+                const bd = (b.deliveryDate || '9999') + (b.deliveryTime || '');
+                return ad.localeCompare(bd);
+            });
         } else {
             sortedCust.sort((a, b) => (a.arrivalDate || '9999').localeCompare(b.arrivalDate || '9999'));
         }
 
-        const statusColors = { '未対応': '#dc3545', '対応中': '#ffc107', '完了': '#28a745' };
-        const statusBg = { '未対応': '#fff5f5', '対応中': '#fffbf0', '完了': '#f0fff4' };
+        // 当日納品は履歴に自動追加
+        sortedCust.forEach(c => {
+            if (c.arrivalDate === today && !c.addedToHistory) {
+                if (!isDuplicate(c.jan)) {
+                    const nowStr = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+                    const newId = "cust_auto" + c.id;
+                    scanList.unshift({
+                        id: newId, code: c.jan, time: nowStr, productName: c.name || '',
+                        memo: c.memo || '', genre: '客注', pop: false, popDetails: [], end: false, order: [],
+                        expiry: '', isNoLearn: false, boxJan: '', initialEdit: false, isProtected: false
+                    });
+                }
+                c.addedToHistory = true;
+                saveData(); refreshHistoryUI(); updateFilterOptions();
+            }
+        });
 
         sortedCust.forEach(c => {
-            const today = new Date().toISOString().split('T')[0];
-            const isOverdue = c.arrivalDate && c.arrivalDate < today && c.status !== '完了';
-            const statusColor = statusColors[c.status] || '#6c757d';
+            const isToday = c.arrivalDate === today;
+            const isPastDue = c.deliveryDate && c.deliveryDate < today;
+            const qtyLabel = `${c.qty || 1}個` + (c.caseQty > 0 ? ` / ${c.caseQty}ケース` : '');
+            const delivStr = c.deliveryDate ? `${c.deliveryDate} ${c.deliveryTime || ''}`.trim() : (c.deliveryTime ? c.deliveryTime : '');
+            let cls = 'cust-list-item';
+            if (isToday) cls += ' today-arrival';
+            else if (isPastDue) cls += ' past-due';
+
+            // サマリー行（常時表示）
+            const namePart = c.name ? `<span style="font-weight:bold; color:#007bff;">${c.name}</span> ` : '';
+            const arrPart = c.arrivalDate ? `<span style="color:#333;">納品: ${c.arrivalDate}</span>` : '<span style="color:#aaa;">納品日未定</span>';
+            const orderedDot = `<span style="color:${c.ordered?'#28a745':'#dc3545'}; font-size:10px; font-weight:bold;">${c.ordered?'●発注済':'●未発注'}</span>`;
+            const histDot = c.addedToHistory ? '<span style="font-size:10px; color:#28a745;">✔履歴済</span>' : '';
+            const todayBadge = isToday ? '<span style="background:#e83e8c; color:#fff; font-size:9px; padding:1px 5px; border-radius:3px; font-weight:bold;">本日</span> ' : '';
+            const pastBadge = isPastDue ? '<span style="background:#dc3545; color:#fff; font-size:9px; padding:1px 5px; border-radius:3px; font-weight:bold;">期限超</span> ' : '';
+
             const li = document.createElement('li');
-            li.className = 'cust-list-item';
+            li.className = cls;
             li.id = `cust-item-${c.id}`;
-            li.style.borderLeftColor = statusColor;
-            li.style.background = isOverdue ? '#fff5f5' : (statusBg[c.status] || '#f9f9f9');
-
-            const overdueBadge = isOverdue ? '<span style="background:#dc3545; color:#fff; font-size:9px; padding:1px 5px; border-radius:3px; font-weight:bold; margin-right:4px;">期限超</span>' : '';
-            const duePart = c.arrivalDate ? `期日: ${c.arrivalDate}` : '期日未設定';
-            const janPart = c.jan ? `<span style="font-family:monospace; color:#888; font-size:10px;"> ${c.jan}</span>` : '';
-            const histDot = (c.addedToHistory && c.jan) ? '<span style="font-size:10px; color:#28a745; margin-left:4px;">✔履歴済</span>' : '';
-
             li.innerHTML = `
                 <div onclick="toggleCustItemDetail(${c.id})" style="cursor:pointer; display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
                     <div style="flex:1; min-width:0;">
-                        <div style="font-size:13px; font-weight:bold; margin-bottom:2px;">${overdueBadge}${c.name}${janPart}</div>
-                        <div style="font-size:11px; color:#666; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                            <span style="color:${statusColor}; font-weight:bold;">${c.status}</span>
-                            <span>${duePart}</span>${histDot}
-                        </div>
+                        <div style="font-size:12px; margin-bottom:2px;">${todayBadge}${pastBadge}${namePart}<span style="font-family:monospace; color:#555;">${c.jan}</span></div>
+                        <div style="font-size:11px; color:#666; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">${arrPart} ${orderedDot} ${histDot}</div>
                     </div>
                     <span id="cust-item-icon-${c.id}" style="font-size:11px; color:#aaa; flex-shrink:0; margin-top:2px;">▼</span>
                 </div>
                 <div id="cust-item-detail-${c.id}" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed #ddd; flex-direction:column; gap:6px; font-size:12px;">
-                    <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-                        <span style="font-size:11px; color:#555;">ステータス変更:</span>
-                        ${['未対応','対応中','完了'].map(s => `<button type="button" onclick="updateCustStatus(${c.id},'${s}')" style="background:${s===c.status?statusColors[s]:'#e9ecef'}; color:${s===c.status?'#fff':'#333'}; padding:3px 8px; font-size:11px; border-radius:4px; border:none; cursor:pointer;">${s}</button>`).join('')}
+                    <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                        ${c.qty || c.caseQty ? `<span style="color:#555;"><strong>数量:</strong> ${qtyLabel}</span>` : ''}
+                        ${delivStr ? `<span style="color:#555;"><strong>受渡:</strong> ${delivStr}</span>` : ''}
+                        ${c.phone ? `<span style="color:#555;"><strong>TEL:</strong> ${c.phone}</span>` : ''}
+                        ${c.memo ? `<span style="color:#555;"><strong>備考:</strong> ${c.memo}</span>` : ''}
                     </div>
-                    ${c.memo ? `<div style="color:#555;"><strong>メモ:</strong> ${c.memo}</div>` : ''}
-                    ${c.phone ? `<div style="color:#555;"><strong>TEL:</strong> ${c.phone}</div>` : ''}
-                    <div style="display:flex; gap:5px; flex-wrap:wrap; margin-top:4px;">
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                        <label style="cursor:pointer; color:${c.ordered?'green':'red'}; font-weight:bold; font-size:11px;"><input type="checkbox" ${c.ordered?'checked':''} onchange="toggleCustOrdered(${c.id}, this.checked)"> 発注済</label>
+                        ${c.willCall ? `<label style="cursor:pointer; color:${c.called?'green':'#dc3545'}; font-weight:bold; font-size:11px;"><input type="checkbox" ${c.called?'checked':''} onchange="toggleCustCalled(${c.id}, this.checked)"> ${c.called?'電話済':'電話要'}</label>` : ''}
+                    </div>
+                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
                         <button type="button" onclick="toggleCustEdit(${c.id})" style="background:#6c757d; padding:4px 8px; font-size:11px;">✏️ 編集</button>
-                        ${c.jan ? `<button type="button" onclick="openZoomModalByJan('${c.jan}','${(c.name||'').replace(/'/g,"\\'")}',${c.id})" style="background:#17a2b8; padding:4px 8px; font-size:11px;">📊 バーコード</button>` : ''}
-                        ${(c.jan && !c.addedToHistory) ? `<button type="button" onclick="addCustToHistory(${c.id})" style="background:#28a745; padding:4px 8px; font-size:11px;">📋 履歴追加</button>` : ''}
-                        <button type="button" onclick="deleteSideItem('cust',${c.id})" style="background:#dc3545; padding:4px 8px; font-size:11px;">削除</button>
+                        <button type="button" onclick="openZoomModalByJan('${c.jan}', '${(c.name||'').replace(/'/g,"\\'")}', ${c.id})" style="background:#17a2b8; padding:4px 8px; font-size:11px;">📊 バーコード</button>
+                        ${!c.addedToHistory ? `<button type="button" onclick="addCustToHistory(${c.id})" style="background:#28a745; padding:4px 8px; font-size:11px;">📋 履歴追加</button>` : ''}
+                        <button type="button" onclick="deleteSideItem('cust', ${c.id})" style="background:#dc3545; padding:4px 8px; font-size:11px;">削除</button>
                     </div>
                     <div class="cust-edit-area" id="cust-edit-area-wrapper-${c.id}">
-                        案件名<input type="text" id="cust-edit-name-${c.id}" value="${c.name||''}" style="width:100%;">
-                        ステータス<select id="cust-edit-status-${c.id}" style="width:100%;">
-                            <option ${c.status==='未対応'?'selected':''}>未対応</option>
-                            <option ${c.status==='対応中'?'selected':''}>対応中</option>
-                            <option ${c.status==='完了'?'selected':''}>完了</option>
-                        </select>
-                        期日<input type="date" id="cust-edit-arr-${c.id}" value="${c.arrivalDate||''}" style="width:100%;">
-                        JAN<input type="number" id="cust-edit-jan-${c.id}" value="${c.jan||''}" style="width:100%;">
-                        メモ<input type="text" id="cust-edit-memo-${c.id}" value="${c.memo||''}" style="width:100%;">
-                        電話<input type="tel" id="cust-edit-phone-${c.id}" value="${c.phone||''}" style="width:100%;">
-                        <button type="button" onclick="saveCustEdit(${c.id})" style="background:#007bff; padding:6px; font-size:12px; width:100%; margin-top:4px;">保存</button>
+                        <input type="text" id="cust-edit-name-${c.id}" value="${c.name||''}" placeholder="商品名" style="width:100%;">
+                        <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                            個数<input type="number" id="cust-edit-qty-${c.id}" value="${c.qty||1}" style="width:55px;">
+                            ケース<input type="number" id="cust-edit-case-${c.id}" value="${c.caseQty||0}" style="width:55px;">
+                        </div>
+                        納品日<input type="date" id="cust-edit-arr-${c.id}" value="${c.arrivalDate||''}" style="width:100%;">
+                        受渡日<input type="date" id="cust-edit-deld-${c.id}" value="${c.deliveryDate||''}" style="width:100%;">
+                        時間<input type="text" id="cust-edit-delt-${c.id}" value="${c.deliveryTime||''}" placeholder="午前/午後/夕方/時間" style="width:100%;">
+                        備考<input type="text" id="cust-edit-memo-${c.id}" value="${c.memo||''}" style="width:100%;">
+                        <button type="button" onclick="saveCustEdit(${c.id})" style="background:#007bff; padding:6px; font-size:12px; width:100%;">保存</button>
                     </div>
                 </div>
             `;
             cList.appendChild(li);
         });
-
-        if (sortedCust.length === 0) {
-            cList.innerHTML = '<li style="padding:16px; text-align:center; color:#aaa; font-size:12px;">案件はありません</li>';
-        }
     }
 
     function toggleCustItemDetail(id) {
@@ -1230,15 +1179,17 @@
     }
 
     function openZoomModalByJan(jan, name, custId) {
+        zoomCurrentData = null;
         document.getElementById("zoom-modal").style.display = "flex";
         document.getElementById("zoom-code").innerText = jan;
         document.getElementById("zoom-name").innerText = name || "";
-        document.getElementById("zoom-memo").innerText = "案件商品";
+        document.getElementById("zoom-memo").innerText = "客注商品";
         document.getElementById("btn-add-from-zoom").style.display = "none";
+        document.getElementById("btn-delete-from-zoom").style.display = "none";
         generateBarcodeCanvas("#zoom-canvas", jan);
     }
 
-    // ===== 売価確認モード =====
+    // ===== 競合対抗確認モード =====
     function toggleCompCheckMode() {
         isCompCheckMode = !isCompCheckMode;
         const bar = document.getElementById('comp-check-mode-bar');
@@ -1248,7 +1199,7 @@
             pending.style.display = 'block';
             pending.innerHTML = '<span style="color:#888; font-size:12px;">商品をスキャンしてください...</span>';
             showHistoryTab();
-            showToast("売価確認モード: スキャンで対象商品を認識", false);
+            showToast("競合対抗確認モード: スキャンで変更対象を認識", false);
         } else {
             bar.style.display = 'none';
             pending.style.display = 'none';
@@ -1286,7 +1237,7 @@
         const newId = "chk" + Date.now().toString() + Math.random().toString(36).substr(2,5);
         scanList.unshift({
             id: newId, code, time: nowStr, productName: name,
-            memo: '', genre: 'アラート', pop: false, popDetails: [], end: false, order: [],
+            memo: '', genre: '競合ヘッダー', pop: false, popDetails: [], end: false, order: [],
             expiry: '', isNoLearn: false, boxJan: '', initialEdit: false, isProtected: false
         });
         saveData(); refreshHistoryUI(); updateFilterOptions();
@@ -1300,7 +1251,7 @@
         
         const alerts = compList.filter(c => c.date === today && !c.dismissed);
         if(alerts.length > 0) {
-            msgs.push("【本日の指定日アラート 予定】\n" + alerts.map(a => "・" + a.name).join("\n"));
+            msgs.push("【本日の競合ヘッダー変更 予定】\n" + alerts.map(a => "・" + a.name).join("\n"));
             alerts.forEach(a => {
                 a.dismissed = true;
                 if (!a.jan) return; 
@@ -1309,7 +1260,7 @@
                 let initialBoxJan = productDB[a.jan] ? (productDB[a.jan].boxJan || "") : "";
                 scanList.unshift({
                     id: id, code: a.jan, time: nowStr, productName: a.name,
-                    memo: "", genre: "アラート", pop: false, popDetails: [], end: false, order: [],
+                    memo: "", genre: "競合ヘッダー", pop: false, popDetails: [], end: false, order: [],
                     expiry: "", isNoLearn: false, boxJan: initialBoxJan, initialEdit: false, isProtected: false
                 });
             });
@@ -1325,11 +1276,11 @@
 
         customerOrderList.forEach(c => {
             if(c.arrivalDate === today && !c.dismissedArrival) {
-                msgs.push(`【本日案件期日】\n・JAN: ${c.jan}\n  ${c.memo}`);
+                msgs.push(`【本日客注納品】\n・JAN: ${c.jan}\n  ${c.memo}`);
                 c.dismissedArrival = true;
             }
             if(c.deliveryDate && c.deliveryDate.startsWith(today) && !c.dismissedDelivery) {
-                msgs.push(`【本日案件】\n・JAN: ${c.jan}\n  ${c.memo}`);
+                msgs.push(`【本日客注受渡】\n・JAN: ${c.jan}\n  ${c.memo}`);
                 c.dismissedDelivery = true;
             }
         });
@@ -1424,7 +1375,6 @@
         document.getElementById('view-competitor-ui').style.display = 'none'; 
         document.getElementById('view-db-ui').style.display = 'none'; 
         document.getElementById('view-temp-ui').style.display = 'none';
-        document.getElementById('view-settings-ui').style.display = 'none';
         
         document.getElementById('top-controls-normal').style.display = 'flex';
         document.getElementById('top-controls-back').style.display = 'none';
@@ -1552,7 +1502,7 @@
         document.getElementById('comp-memo').value = "";
         document.getElementById('comp-reason').value = "ヘッダー変更";
         document.getElementById('comp-reason-other').style.display = 'none';
-        showToast("アラートを登録しました", false);
+        showToast("競合ヘッダー予定を追加しました", false);
     }
 
     function deleteCompetitor(id) { compList = compList.filter(c => c.id !== id); saveData(); refreshCompUI(); }
@@ -1602,6 +1552,70 @@
         }
     }
 
+    const CAM_PRESETS = {
+        default: { fps: 5,  focusVal: 'none',      label: 'デフォルト',  desc: 'FPS: 5 / AF: 指定なし（html5-qrcodeのデフォルト値）' },
+        fast:    { fps: 10, focusVal: 'continuous', label: '読取最優先', desc: 'FPS: 10 / AF: continuous（ピンボケ改善・読取速度アップ）' },
+        custom:  { fps: 10, focusVal: 'continuous', label: 'カスタム',   desc: '' }
+    };
+    let currentPreset = 'default';
+
+    function selectPreset(preset) {
+        currentPreset = preset;
+        ['default','fast','custom'].forEach(p => {
+            const btn = document.getElementById('preset-btn-' + p);
+            if (!btn) return;
+            const active = p === preset;
+            btn.style.background = active ? '#1a1a2e' : '#fff';
+            btn.style.color = active ? '#fff' : '#555';
+            btn.style.borderColor = active ? '#1a1a2e' : '#ddd';
+        });
+        const customEl = document.getElementById('custom-controls');
+        if (customEl) customEl.style.display = preset === 'custom' ? 'flex' : 'none';
+        const descEl = document.getElementById('preset-desc');
+        if (descEl) {
+            if (preset !== 'custom') {
+                descEl.textContent = CAM_PRESETS[preset].desc;
+                descEl.style.display = 'block';
+            } else {
+                descEl.style.display = 'none';
+            }
+        }
+        if (preset !== 'custom') {
+            const fpsEl = document.getElementById('setting-fps');
+            const focusEl = document.getElementById('setting-focus');
+            if (fpsEl) { fpsEl.value = CAM_PRESETS[preset].fps; document.getElementById('label-fps').textContent = CAM_PRESETS[preset].fps; }
+            if (focusEl) focusEl.value = CAM_PRESETS[preset].focusVal;
+        }
+        updateCamSettingLabel();
+    }
+
+    function onCustomChange() {
+        const fps = document.getElementById('setting-fps').value;
+        document.getElementById('label-fps').textContent = fps;
+        updateCamSettingLabel();
+    }
+
+    function getCamSettings() {
+        const fps = parseInt(document.getElementById('setting-fps') ? document.getElementById('setting-fps').value : 5) || 5;
+        const focusVal = document.getElementById('setting-focus') ? document.getElementById('setting-focus').value : 'none';
+        return { fps, focusVal };
+    }
+
+    function updateCamSettingLabel() {
+        const el = document.getElementById('cam-settings-summary');
+        if (!el) return;
+        const label = currentPreset === 'custom'
+            ? `カスタム FPS:${document.getElementById('setting-fps').value} / AF:${document.getElementById('setting-focus').value}`
+            : CAM_PRESETS[currentPreset].label;
+        el.textContent = label;
+    }
+
+    function applyCamSettings() {
+        updateCamSettingLabel();
+        if (isCameraRunning) { forceStopCamera(); setTimeout(startCamera, 400); }
+        showToast('カメラ設定を適用しました', false);
+    }
+
     function startCamera() {
         if (html5QrCode && html5QrCode.isScanning) return;
         if (!html5QrCode) { html5QrCode = new Html5Qrcode("reader", { formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8, Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.ITF ] }); }
@@ -1612,8 +1626,13 @@
         } else {
             qrboxFn = (w, h) => ({ width: w * 0.85, height: h * 0.4 });
         }
-        const config = { fps: 5, qrbox: qrboxFn, aspectRatio: 1.0 };
-        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+        const { fps, focusVal } = getCamSettings();
+        const videoConstraints = { facingMode: "environment" };
+        const config = { fps, qrbox: qrboxFn, aspectRatio: 1.0 };
+        if (focusVal !== 'none') {
+            config.videoConstraints = { facingMode: "environment", advanced: [{ focusMode: focusVal }] };
+        }
+        html5QrCode.start(videoConstraints, config, onScanSuccess)
         .then(() => { isCameraRunning = true; document.getElementById("status").innerText = ""; })
         .catch(err => { document.getElementById("status").innerText = "起動エラー: " + err; });
     }
@@ -1670,7 +1689,7 @@
             return;
         }
 
-        // 売価確認モード
+        // 競合対抗確認モード
         if (isCompCheckMode) {
             let finalCode = cleanCode;
             if (cleanCode.length === 14) { const converted = tryConvertITFtoJAN(cleanCode); if (converted) finalCode = converted; }
@@ -1683,14 +1702,6 @@
     }
 
     async function checkAndRegister(code) {
-        if (code.startsWith('0')) {
-            if(!confirm(`⚠️ 0から始まるコードがスキャンされました。\nこのまま登録しますか？\nコード: ${code}`)) {
-                if(isCameraRunning) { feedback('ng'); setTimeout(() => { isProcessing = false; }, 500); } 
-                else { isProcessing = false; }
-                return;
-            }
-        }
-
         if (code.length === 14) {
             const convertedBoxJan = tryConvertITFtoJAN(code);
             if (convertedBoxJan) {
@@ -1807,9 +1818,9 @@
 
     function saveData() {
         try {
-            localStorage.setItem("sellfloor_list", JSON.stringify(scanList));
-            localStorage.setItem("sellfloor_db", JSON.stringify(productDB));
-            localStorage.setItem("sellfloor_comp", JSON.stringify(compList));
+            localStorage.setItem("barcode_master_list", JSON.stringify(scanList));
+            localStorage.setItem("barcode_master_db", JSON.stringify(productDB));
+            localStorage.setItem("barcode_master_comp", JSON.stringify(compList));
         } catch(e) {
             if (e.name === 'QuotaExceededError') {
                 showToast("⚠️ 保存容量が上限に達しました。古い履歴を削除してください", true);
@@ -1821,8 +1832,8 @@
 
     function saveSideDataSafe() {
         try {
-            localStorage.setItem("sellfloor_return", JSON.stringify(returnList));
-            localStorage.setItem("sellfloor_cust", JSON.stringify(customerOrderList));
+            localStorage.setItem("barcode_master_return", JSON.stringify(returnList));
+            localStorage.setItem("barcode_master_cust", JSON.stringify(customerOrderList));
         } catch(e) {
             if (e.name === 'QuotaExceededError') {
                 showToast("⚠️ 保存容量が上限に達しました。データを整理してください", true);
@@ -1831,11 +1842,265 @@
         updateNavBadges();
     }
 
+    // ===== リマインダー機能 =====
+    function saveReminders() {
+        try {
+            localStorage.setItem("barcode_master_reminders", JSON.stringify(reminderList));
+        } catch(e) {
+            showToast("⚠️ リマインダーの保存に失敗しました", true);
+        }
+    }
+
+    function checkReminders() {
+        const now = new Date();
+        // 分単位で比較するため秒を切り捨て
+        const nowStr = now.getFullYear() + '-'
+            + String(now.getMonth()+1).padStart(2,'0') + '-'
+            + String(now.getDate()).padStart(2,'0') + 'T'
+            + String(now.getHours()).padStart(2,'0') + ':'
+            + String(now.getMinutes()).padStart(2,'0');
+
+        let fired = false;
+        reminderList.forEach(r => {
+            if (!r.fired && r.datetime <= nowStr) {
+                r.fired = true;
+                fired = true;
+                const remId = 'rem' + r.id;
+                // 既に履歴に追加済みの場合はスキップ
+                if (scanList.some(i => i.id === remId)) return;
+                const timeStr = new Date(r.datetime).toLocaleString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+                scanList.unshift({
+                    id: remId,
+                    code: 'REMINDER',
+                    time: timeStr,
+                    productName: r.memo,
+                    memo: '',
+                    genre: '⏰リマインダー',
+                    pop: false, popDetails: [], end: false, order: [],
+                    expiry: '', isNoLearn: true, boxJan: '', initialEdit: false, isProtected: false
+                });
+            }
+        });
+        if (fired) {
+            saveReminders();
+            saveData();
+            refreshHistoryUI();
+            updateFilterOptions();
+            showToast("⏰ リマインダーが届きました", false);
+        }
+    }
+
+    function addReminder() {
+        const dt = document.getElementById('reminder-datetime').value;
+        const memo = document.getElementById('reminder-memo').value.trim();
+        if (!dt) { alert("日時を入力してください"); return; }
+        if (!memo) { alert("メモ内容を入力してください"); return; }
+        reminderList.push({ id: Date.now(), datetime: dt, memo: memo, fired: false });
+        saveReminders();
+        refreshReminderList();
+        document.getElementById('reminder-datetime').value = '';
+        document.getElementById('reminder-memo').value = '';
+        showToast("リマインダーを登録しました", false);
+    }
+
+    function deleteReminder(id) {
+        reminderList = reminderList.filter(r => r.id !== id);
+        saveReminders();
+        refreshReminderList();
+    }
+
+    function refreshReminderList() {
+        const ul = document.getElementById('reminder-list');
+        if (!ul) return;
+        ul.innerHTML = '';
+        if (reminderList.length === 0) {
+            ul.innerHTML = '<li style="color:#aaa; font-size:12px; padding:8px 0;">登録中のリマインダーはありません</li>';
+            return;
+        }
+        const now = new Date();
+        [...reminderList].sort((a,b) => a.datetime.localeCompare(b.datetime)).forEach(r => {
+            const isPast = r.fired || new Date(r.datetime) <= now;
+            const li = document.createElement('li');
+            li.style.cssText = `background:${isPast?'#f0f0f0':'#fff'}; border-left:4px solid ${isPast?'#aaa':'#007bff'}; padding:8px 10px; margin-bottom:6px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; font-size:12px;`;
+            const dtLabel = r.datetime.replace('T', ' ').slice(0,16);
+            li.innerHTML = `
+                <div>
+                    <div style="font-weight:bold; color:${isPast?'#aaa':'#333'};">${dtLabel} ${isPast?'<span style="color:#aaa;">(発火済)</span>':''}</div>
+                    <div style="color:${isPast?'#aaa':'#555'}; margin-top:2px;">${r.memo}</div>
+                </div>
+                <button onclick="deleteReminder(${r.id})" style="background:#dc3545; padding:4px 10px; font-size:11px; flex-shrink:0; margin-left:8px;">削除</button>
+            `;
+            ul.appendChild(li);
+        });
+    }
+
+    // ===== メモ機能 =====
+    const NOTE_COLORS = ['#ffffff','#fff9c4','#d4edda','#d1ecf1','#f8d7da','#e2d9f3'];
+    let editingNoteId = null;
+
+    function saveNotes() {
+        try {
+            localStorage.setItem("barcode_master_notes", JSON.stringify(notesList));
+        } catch(e) {
+            showToast("⚠️ メモの保存に失敗しました（容量不足の可能性）", true);
+        }
+    }
+
+    function refreshNotesList() {
+        const grid = document.getElementById('notes-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        if (notesList.length === 0) {
+            grid.innerHTML = '<div style="grid-column:1/-1; color:#aaa; font-size:12px; text-align:center; padding:16px 0;">メモはまだありません</div>';
+            return;
+        }
+        const sorted = [...notesList].sort((a, b) => {
+            if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+            return b.updated - a.updated;
+        });
+        sorted.forEach(note => {
+            const div = document.createElement('div');
+            div.className = 'note-card' + (note.pinned ? ' pinned-card' : '');
+            div.style.background = note.color || '#ffffff';
+            div.innerHTML = `
+                ${note.pinned ? '<span class="note-pin-badge">📌</span>' : ''}
+                <div class="note-card-title">${escapeHtml(note.title || '（タイトルなし）')}</div>
+                <div class="note-card-body">${escapeHtml(note.text || '')}</div>
+            `;
+            div.onclick = () => openNoteEdit(note.id);
+            grid.appendChild(div);
+        });
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function openNoteEdit(id) {
+        const note = notesList.find(n => n.id === id);
+        if (!note) return;
+        editingNoteId = id;
+        _renderNoteOverlay(note);
+    }
+
+    function openNoteNew() {
+        const titleEl = document.getElementById('note-new-title');
+        const title = titleEl ? titleEl.value.trim() : '';
+        if (!title) { alert("タイトルを入力してください"); return; }
+        const newNote = {
+            id: Date.now(),
+            title: title,
+            text: '',
+            color: '#ffffff',
+            pinned: false,
+            updated: Date.now()
+        };
+        notesList.unshift(newNote);
+        saveNotes();
+        if (titleEl) titleEl.value = '';
+        refreshNotesList();
+        // 作成後すぐ編集画面を開く
+        openNoteEdit(newNote.id);
+    }
+
+    function _renderNoteOverlay(note) {
+        // 既存オーバーレイ除去
+        const existing = document.getElementById('note-edit-overlay');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'note-edit-overlay';
+        overlay.id = 'note-edit-overlay';
+        // 枠外タップで閉じる
+        overlay.onclick = (e) => { if (e.target === overlay) closeNoteEdit(); };
+
+        const colorBtns = NOTE_COLORS.map(c =>
+            `<button class="note-color-btn ${note.color===c?'selected':''}" style="background:${c};" onclick="setNoteColor(${note.id},'${c}',this)" title="${c}"></button>`
+        ).join('');
+
+        overlay.innerHTML = `
+            <div class="note-edit-box" id="note-edit-box" style="background:${note.color||'#fff'};">
+                <input class="note-edit-title" id="note-edit-title-input" type="text" value="${escapeHtml(note.title||'')}" placeholder="タイトル" maxlength="60"
+                    onblur="saveNoteField(${note.id},'title',this.value)">
+                <textarea class="note-edit-body" id="note-edit-body-input" placeholder="メモ本文（任意）"
+                    onblur="saveNoteField(${note.id},'text',this.value)">${escapeHtml(note.text||'')}</textarea>
+                <div class="note-edit-actions">
+                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                        ${colorBtns}
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="toggleNotePin(${note.id})" style="background:${note.pinned?'#ffc107':'#e9ecef'}; color:${note.pinned?'#000':'#555'}; padding:6px 10px; font-size:13px; border-radius:6px; box-shadow:none; border:1px solid #ddd;">${note.pinned?'📌 ピン中':'📌 ピン'}</button>
+                        <button onclick="deleteNote(${note.id})" style="background:#dc3545; padding:6px 12px; font-size:13px; border-radius:6px;">削除</button>
+                        <button onclick="closeNoteEdit()" style="background:#6c757d; padding:6px 12px; font-size:13px; border-radius:6px;">閉じる</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        // タイトルにフォーカス（本文は触れない）
+        setTimeout(() => {
+            const t = document.getElementById('note-edit-title-input');
+            if (t) t.focus();
+        }, 100);
+    }
+
+    function saveNoteField(id, field, value) {
+        const note = notesList.find(n => n.id === id);
+        if (!note) return;
+        note[field] = value;
+        note.updated = Date.now();
+        saveNotes();
+        refreshNotesList();
+    }
+
+    function setNoteColor(id, color, btn) {
+        const note = notesList.find(n => n.id === id);
+        if (!note) return;
+        note.color = color;
+        note.updated = Date.now();
+        saveNotes();
+        refreshNotesList();
+        // ボックス背景色を即時反映
+        const box = document.getElementById('note-edit-box');
+        if (box) box.style.background = color;
+        // 選択中ボタンの強調更新
+        if (btn) {
+            btn.closest('.note-edit-actions') && btn.closest('div').querySelectorAll('.note-color-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+    }
+
+    function toggleNotePin(id) {
+        const note = notesList.find(n => n.id === id);
+        if (!note) return;
+        note.pinned = !note.pinned;
+        note.updated = Date.now();
+        saveNotes();
+        refreshNotesList();
+        // ボタンの見た目を更新
+        _renderNoteOverlay(note);
+    }
+
+    function deleteNote(id) {
+        if (!confirm("このメモを削除しますか？")) return;
+        notesList = notesList.filter(n => n.id !== id);
+        saveNotes();
+        closeNoteEdit();
+        refreshNotesList();
+    }
+
+    function closeNoteEdit() {
+        const overlay = document.getElementById('note-edit-overlay');
+        if (overlay) overlay.remove();
+        editingNoteId = null;
+        refreshNotesList();
+    }
+
     function updateNavBadges() {
         const today = new Date().toISOString().split('T')[0];
         const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
-        // 業務バッジ: 未完了案件数 + 本日の返品予定
+        // 業務バッジ: 未完了客注件数 + 本日の返品予定
         const pendingCust = customerOrderList.filter(c => !c.addedToHistory || !c.ordered).length;
         const todayReturn = returnList.filter(r => r.returnDate === today && !r.dismissed).length;
         const menuCount = pendingCust + todayReturn;
@@ -1866,11 +2131,11 @@
         const compSoon = compList.filter(c => c.date > today).length;
 
         let chips = [];
-        chips.push({ label: `案件 ${totalCust}件`, color: totalCust > 0 ? '#007bff' : '#aaa', bg: totalCust > 0 ? '#e7f0ff' : '#f0f0f0' });
+        chips.push({ label: `客注 ${totalCust}件`, color: totalCust > 0 ? '#007bff' : '#aaa', bg: totalCust > 0 ? '#e7f0ff' : '#f0f0f0' });
         if (todayCust > 0) chips.push({ label: `本日納品 ${todayCust}件`, color: '#fff', bg: '#e83e8c' });
         chips.push({ label: `返品予定 ${pendingReturn}件`, color: pendingReturn > 0 ? '#856404' : '#aaa', bg: pendingReturn > 0 ? '#fff3cd' : '#f0f0f0' });
-        if (compToday > 0) chips.push({ label: `アラート本日 ${compToday}件`, color: '#fff', bg: '#dc3545' });
-        if (compSoon > 0) chips.push({ label: `アラート予定 ${compSoon}件`, color: '#fff', bg: '#6c757d' });
+        if (compToday > 0) chips.push({ label: `競合本日 ${compToday}件`, color: '#fff', bg: '#dc3545' });
+        if (compSoon > 0) chips.push({ label: `競合予定 ${compSoon}件`, color: '#fff', bg: '#6c757d' });
 
         el.innerHTML = chips.map(c =>
             `<span class="summary-chip" style="color:${c.color}; background:${c.bg};">${c.label}</span>`
@@ -1883,10 +2148,10 @@
         const detail = document.getElementById('storage-detail');
         if (!barInner || !label) return;
 
-        const keys = ['sellfloor_list','sellfloor_db','sellfloor_comp','sellfloor_return','sellfloor_cust'];
+        const keys = ['barcode_master_list','barcode_master_db','barcode_master_comp','barcode_master_return','barcode_master_cust'];
         let total = 0;
         let breakdown = [];
-        const names = { sellfloor_list:'履歴', sellfloor_db:'商品DB', sellfloor_comp:'アラート', sellfloor_return:'返品', sellfloor_cust:'案件' };
+        const names = { barcode_master_list:'履歴', barcode_master_db:'商品DB', barcode_master_comp:'競合', barcode_master_return:'返品', barcode_master_cust:'客注' };
         keys.forEach(k => {
             const v = localStorage.getItem(k) || '';
             const kb = Math.round(v.length * 2 / 1024);  // UTF-16 2bytes/char
@@ -1948,7 +2213,7 @@
                         const disp = li.querySelector('.genre-badge');
                         if (disp) {
                             disp.innerText = value;
-                            if (value) { disp.style.display = "inline-block"; if (value === "アラート") { disp.style.background = "#28a745"; disp.style.color = "#ffc107"; } else { disp.style.background = "#6f42c1"; disp.style.color = "#fff"; } } 
+                            if (value) { disp.style.display = "inline-block"; if (value === "競合ヘッダー") { disp.style.background = "#28a745"; disp.style.color = "#ffc107"; } else { disp.style.background = "#6f42c1"; disp.style.color = "#fff"; } } 
                             else { disp.style.display = "none"; }
                         }
                     }
@@ -2216,6 +2481,7 @@
             
             let liClass = "item"; 
             if (isExpired) liClass += " expired"; 
+            if (data.code === 'REMINDER') liClass += " reminder-item";
             if (isSelectingForBackup && selectedItems.has(data.id)) liClass += " selected"; 
             if (isSelectingForMerge && selectedMergeItems.has(data.id)) liClass += " selected"; 
             if (data.isProtected) liClass += " protected";
@@ -2260,8 +2526,8 @@
             const orderArr = Array.isArray(data.order) ? data.order : (data.order && data.order !== 'false' && data.order !== false ? [data.order] : []);
             const orderBadges = orderArr.map(o => `<span class="order-badge" style="${getOrderBadgeColor(o)}">${o}</span>`).join(" ");
             
-            let genreBadgeClass = data.genre === "アラート" ? "genre-badge comp-badge" : "genre-badge";
-            let genreStyle = data.genre === "アラート" ? "background:#28a745; color:#ffc107;" : ""; if (!data.genre) genreStyle += " display:none;";
+            let genreBadgeClass = data.genre === "競合ヘッダー" ? "genre-badge comp-badge" : "genre-badge";
+            let genreStyle = data.genre === "競合ヘッダー" ? "background:#28a745; color:#ffc107;" : ""; if (!data.genre) genreStyle += " display:none;";
             let genreBadge = `<span class="${genreBadgeClass}" style="${genreStyle}">${data.genre || ''}</span>`;
             
             const checkIcon = (isSelectingForBackup && selectedItems.has(data.id)) || (isSelectingForMerge && selectedMergeItems.has(data.id)) ? `<span style="color:#17a2b8; font-size:18px;">☑ </span>` : "";
@@ -2269,11 +2535,16 @@
             
             const initialOpenClass = data.initialEdit ? "open" : ""; const initialBtnClass = data.initialEdit ? "active" : ""; const initialBtnText = data.initialEdit ? "📝" : "✏️";
 
+            // 0始まりJANの先頭0を強調
+            const codeDisplay = data.code.startsWith('0') && data.code !== 'REMINDER'
+                ? `<span style="background:#fff3cd;color:#856404;font-weight:bold;border:1px solid #ffc107;border-radius:3px;padding:0 3px;font-size:18px;" title="0始まりJAN">0</span>${data.code.slice(1)}`
+                : (data.code === 'REMINDER' ? '📅 リマインダー' : data.code);
+
             let html = `
                 <div class="item-header">
                     <div class="item-main-info">
                         <div class="item-code">
-                            ${checkIcon}${data.code} ${protectIcon} <span class="zoom-icon">🔍</span>
+                            ${checkIcon}${codeDisplay} ${protectIcon} <span class="zoom-icon">${data.code === 'REMINDER' ? '' : '🔍'}</span>
                             ${isExpired ? '<span style="color:red; font-size:10px;">期限切</span>' : ''}
                         </div>
                         <div class="item-meta">
@@ -2578,7 +2849,7 @@
                         const isCP = item.popDetails && item.popDetails.some(p => p.size === '競合');
                         badges.push({ text: `POP${formatPopDetails(item.popDetails)}`, bg: isCP ? "#28a745" : "#ffc107", fg: isCP ? "#fff" : "#000" });
                     }
-                    if (item.genre) badges.push({ text: item.genre, bg: item.genre === "アラート" ? "#28a745" : "#6f42c1", fg: "#fff" });
+                    if (item.genre) badges.push({ text: item.genre, bg: item.genre === "競合ヘッダー" ? "#28a745" : "#6f42c1", fg: "#fff" });
                     if (item.memo) badges.push({ text: item.memo, bg: "#e9ecef", fg: "#444" });
 
                     ctx.font = "bold 12px sans-serif";
@@ -2641,21 +2912,44 @@
     }
 
     let zoomCurrentIndex = -1; // 現在zoom表示中の履歴インデックス
+    let zoomCurrentData = null; // 現在zoom表示中のデータ
+
+    function deleteFromZoom() {
+        if (!zoomCurrentData) return;
+        if (zoomCurrentData.isProtected) { showToast("⚠️ 保護されているため削除できません", true); return; }
+        if (!confirm(`この履歴を削除しますか？\n${zoomCurrentData.code === 'REMINDER' ? '📅 ' + (zoomCurrentData.productName || 'リマインダー') : zoomCurrentData.code}`)) return;
+        closeZoomModal();
+        deleteItem(zoomCurrentData.id);
+    }
 
     function openZoomModal(data) {
         // 現在の表示リストから index を特定
         const displayList = getCurrentDisplayList();
         zoomCurrentIndex = displayList.findIndex(d => d.id === data.id);
+        zoomCurrentData = data;
 
         _renderZoomModal(data);
         _updateZoomNav(displayList);
 
         document.getElementById("btn-add-from-zoom").style.display = "none";
+        // 削除ボタン表示制御
+        const delBtn = document.getElementById("btn-delete-from-zoom");
+        delBtn.style.display = "block";
+        delBtn.disabled = !!data.isProtected;
+        delBtn.style.opacity = data.isProtected ? "0.4" : "1";
         document.getElementById("zoom-modal").style.display = "flex";
     }
 
     function _renderZoomModal(data) {
-        document.getElementById("zoom-code").innerText = data.code;
+        // コード表示：0始まり強調 / REMINDER対応
+        const zoomCodeEl = document.getElementById("zoom-code");
+        if (data.code === 'REMINDER') {
+            zoomCodeEl.innerHTML = '<span style="font-size:22px;">📅 リマインダー</span>';
+        } else if (data.code.startsWith('0')) {
+            zoomCodeEl.innerHTML = `<span style="background:#fff3cd;color:#856404;font-weight:bold;border:1px solid #ffc107;border-radius:3px;padding:0 4px;">0</span>${data.code.slice(1)}`;
+        } else {
+            zoomCodeEl.innerText = data.code;
+        }
         document.getElementById("zoom-name").innerText = data.productName || "";
         let metaArray = [];
         if (data.genre) metaArray.push("[" + data.genre + "]");
@@ -2665,7 +2959,21 @@
         if (data.pop) metaArray.push(`POP${formatPopDetails(data.popDetails)}`);
         const metaStr = metaArray.length > 0 ? `${metaArray.join(", ")} ` : "";
         document.getElementById("zoom-memo").innerText = metaStr + (data.memo || "");
-        generateBarcodeCanvas("#zoom-canvas", data.code);
+        // REMINDERはバーコード生成をスキップ
+        if (data.code === 'REMINDER') {
+            const canvas = document.getElementById("zoom-canvas");
+            const ctx = canvas.getContext('2d');
+            canvas.width = 280; canvas.height = 60;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#fff3cd";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#856404";
+            ctx.font = "bold 16px sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText("スケジュールリマインダー", canvas.width / 2, 36);
+        } else {
+            generateBarcodeCanvas("#zoom-canvas", data.code);
+        }
     }
 
     function _updateZoomNav(displayList) {
@@ -2688,8 +2996,15 @@
         const newIndex = zoomCurrentIndex + delta;
         if (newIndex < 0 || newIndex >= displayList.length) return;
         zoomCurrentIndex = newIndex;
+        zoomCurrentData = displayList[zoomCurrentIndex];
         _renderZoomModal(displayList[zoomCurrentIndex]);
         _updateZoomNav(displayList);
+        // 削除ボタン保護状態を更新
+        const delBtn = document.getElementById("btn-delete-from-zoom");
+        if (delBtn) {
+            delBtn.disabled = !!zoomCurrentData.isProtected;
+            delBtn.style.opacity = zoomCurrentData.isProtected ? "0.4" : "1";
+        }
     }
 
     function getCurrentDisplayList() {
@@ -2702,9 +3017,11 @@
     }
 
     function openPreviewModal(code, name) {
+        zoomCurrentData = null;
         document.getElementById("zoom-modal").style.display = "flex"; document.getElementById("zoom-code").innerText = code; document.getElementById("zoom-name").innerText = name || ""; document.getElementById("zoom-memo").innerText = "";
         const addBtn = document.getElementById("btn-add-from-zoom"); addBtn.style.display = "block";
         addBtn.onclick = async (e) => { e.stopPropagation(); await checkAndRegister(code); closeZoomModal(); };
+        document.getElementById("btn-delete-from-zoom").style.display = "none";
         generateBarcodeCanvas("#zoom-canvas", code);
     }
 
@@ -2752,8 +3069,10 @@
     function generateShareURL() {
         if (scanList.length === 0) { showToast("履歴が空です", true); return; }
         const encoded = encodeShareData(scanList);
-        // GitHub Pages: share.html と同じフォルダに置くこと
-        const url = `share.html?data=${encoded}&from=main`;
+        // 絶対URLを生成
+        const pathDir = location.pathname.replace(/[^\/]*$/, '');
+        const shareBase = location.origin + pathDir + 'share.html';
+        const url = `${shareBase}?data=${encoded}&from=main`;
         const box = document.getElementById('share-url-box');
         const textArea = document.getElementById('share-url-text');
         const warning = document.getElementById('share-url-warning');
@@ -2766,6 +3085,27 @@
             warning.style.display = 'none';
         }
         showToast(`URL生成完了 (${scanList.length}件 / ${url.length}文字)`, false);
+    }
+
+    function shareMainURL() {
+        const url = document.getElementById('share-url-text').value;
+        if (!url) return;
+        if (navigator.share) {
+            navigator.share({
+                title: '棚番長 データ共有',
+                text: 'バーコードデータを共有します。共有ツールで開いてください。',
+                url: url
+            }).catch(err => {
+                if (err.name !== 'AbortError') {
+                    navigator.clipboard.writeText(url)
+                        .then(() => showToast("URLをコピーしました。LINEに貼り付けて送信してください", false));
+                }
+            });
+        } else {
+            navigator.clipboard.writeText(url)
+                .then(() => showToast("URLをコピーしました。LINEに貼り付けて送信してください", false))
+                .catch(() => { document.getElementById('share-url-text').select(); document.execCommand('copy'); showToast("URLをコピーしました", false); });
+        }
     }
 
     function copyShareToolURL() {
@@ -2814,9 +3154,9 @@
     }
 
     function exportData() { 
-        const data = { list: scanList, db: productDB, comp: compList, return: returnList, cust: customerOrderList, date: new Date().toISOString() }; 
+        const data = { list: scanList, db: productDB, comp: compList, return: returnList, cust: customerOrderList, notes: notesList, date: new Date().toISOString() }; 
         const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const url = URL.createObjectURL(blob); 
-        const a = document.createElement("a"); a.href = url; a.download = `sellfloor_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); 
+        const a = document.createElement("a"); a.href = url; a.download = `barcode_master_all_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); 
     }
     
     function importData(input) {
@@ -2834,6 +3174,7 @@
                         if(data.comp) { const compIds = new Set(compList.map(c => c.id)); const newComp = data.comp.filter(c => !compIds.has(c.id)); compList = [...newComp, ...compList]; }
                         if(data.return) { const rIds = new Set(returnList.map(r => r.id)); const newRet = data.return.filter(r => !rIds.has(r.id)); returnList = [...newRet, ...returnList]; }
                         if(data.cust) { const cIds = new Set(customerOrderList.map(c => c.id)); const newCust = data.cust.filter(c => !cIds.has(c.id)); customerOrderList = [...newCust, ...customerOrderList]; }
+                        if(data.notes) { const nIds = new Set(notesList.map(n => n.id)); const newNotes = data.notes.filter(n => !nIds.has(n.id)); notesList = [...newNotes, ...notesList]; saveNotes(); }
                         saveData(); saveSideData(); refreshHistoryUI(); refreshCompUI(); refreshSideLists(); updateFilterOptions();
                         if(currentMode === 'db') refreshDBUI(); showToast(`${newItems.length}件の履歴を復元・結合しました`, false);
                     }
