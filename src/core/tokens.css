@@ -1,0 +1,99 @@
+/* デザイントークン — 仕分番長の配色体系を全ツール共通に昇格したもの。
+   色・サイズは必ずここの変数を参照し、リテラル指定をしない。 */
+
+:root {
+  /* 配色（ライト） */
+  --bg: #f4f2ef;
+  --surface: #ffffff;
+  --surface-2: #faf9f7;
+  --border: #dcd8d2;
+  --text: #262422;
+  --text-sub: #6f6a63;
+  --teal: #0f766e;
+  --teal-soft: #d6ebe9;
+  --red: #b91c1c;
+  --red-soft: #fbe4e4;
+  --amber: #b45309;
+  --amber-soft: #fdeecd;
+  --blue: #1d4ed8;
+  --blue-soft: #dde7fb;
+
+  /* 意味色の役割固定 */
+  --ok: var(--teal);
+  --danger: var(--red);
+  --warn: var(--amber);
+
+  /* サイズ（手袋・片手親指操作前提） */
+  --tap-min: 48px;
+  --tap-primary: 56px;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --font-body: 15px;
+  --font-sub: 12px;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'Roboto Mono', monospace;
+
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --nav-height: 60px;
+  --max-width: 480px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #1c1b1a;
+    --surface: #262523;
+    --surface-2: #2e2d2a;
+    --border: #423f3b;
+    --text: #ece9e4;
+    --text-sub: #a29c93;
+    --teal: #2dd4bf;
+    --teal-soft: #123f3b;
+    --red: #f87171;
+    --red-soft: #46201f;
+    --amber: #fbbf24;
+    --amber-soft: #45320d;
+    --blue: #93b4f5;
+    --blue-soft: #1d2c4f;
+    --shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #1c1b1a;
+  --surface: #262523;
+  --surface-2: #2e2d2a;
+  --border: #423f3b;
+  --text: #ece9e4;
+  --text-sub: #a29c93;
+  --teal: #2dd4bf;
+  --teal-soft: #123f3b;
+  --red: #f87171;
+  --red-soft: #46201f;
+  --amber: #fbbf24;
+  --amber-soft: #45320d;
+  --blue: #93b4f5;
+  --blue-soft: #1d2c4f;
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Hiragino Kaku Gothic Pro', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
+  font-size: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
+}

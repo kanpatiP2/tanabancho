@@ -1,0 +1,7 @@
+node_modules/
+dist/
+dev-dist/
+*.local
+
+# 実データ（個人情報・APIキーを含む）— 絶対にコミットしない
+test-fixtures-local/

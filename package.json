@@ -1,0 +1,30 @@
+{
+  "name": "tanabancho",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@preact/signals": "^2.0.0",
+    "html5-qrcode": "^2.3.8",
+    "idb-keyval": "^6.2.1",
+    "jsbarcode": "3.11.6",
+    "lz-string": "^1.5.0",
+    "preact": "^10.27.0",
+    "qrcode-generator": "^1.4.4"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.0",
+    "@types/node": "^26.2.0",
+    "typescript": "^5.9.0",
+    "vite": "^7.0.0",
+    "vite-plugin-pwa": "^1.0.0",
+    "vitest": "^3.2.0"
+  }
+}
