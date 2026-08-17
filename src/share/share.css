@@ -1,0 +1,643 @@
+/* 共有ビュー。色はすべて tokens.css の変数を参照する（リテラル禁止） */
+
+/* ヘッダーとタブをまとめて追従させる（個別に sticky にすると重なる） */
+.sv-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.sv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.sv-title {
+  font-size: var(--font-body);
+  font-weight: 700;
+  color: var(--teal);
+}
+
+.sv-count {
+  font-size: var(--font-sub);
+  font-weight: 700;
+  color: var(--teal);
+  background: var(--teal-soft);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+}
+
+/* ---- バナー ---- */
+
+.sv-banner {
+  background: var(--amber-soft);
+  color: var(--amber);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
+  text-align: center;
+  font-size: var(--font-sub);
+  line-height: 1.6;
+}
+
+.sv-banner strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* ---- タブ ---- */
+
+.sv-tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.sv-tab {
+  flex: 1;
+  min-height: var(--tap-min);
+  padding: 10px 4px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--text-sub);
+  font: inherit;
+  font-size: var(--font-sub);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sv-tab[aria-selected='true'] {
+  color: var(--teal);
+  border-bottom-color: var(--teal);
+}
+
+.sv-tab-badge {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: var(--radius-sm);
+  background: var(--teal);
+  color: var(--surface);
+  font-size: 10px;
+}
+
+/* ---- レイアウト ---- */
+
+.sv-panel {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sv-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+.sv-card h2 {
+  margin: 0 0 8px;
+  font-size: var(--font-body);
+  font-weight: 700;
+}
+
+.sv-desc {
+  margin: 0 0 10px;
+  font-size: var(--font-sub);
+  color: var(--text-sub);
+  line-height: 1.7;
+}
+
+.sv-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-sub);
+  font-size: var(--font-sub);
+  line-height: 1.8;
+}
+
+/* ---- ボタン ---- */
+
+.sv-btn {
+  min-height: var(--tap-min);
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sv-btn--primary {
+  min-height: var(--tap-primary);
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--surface);
+}
+
+.sv-btn--danger {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: var(--red-soft);
+}
+
+.sv-btn--ghost {
+  width: auto;
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: var(--font-sub);
+}
+
+.sv-btn:disabled {
+  opacity: 0.5;
+}
+
+/* ---- カメラ ---- */
+
+.sv-camera {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--text);
+  border: 3px solid transparent;
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.sv-camera--ok {
+  border-color: var(--ok);
+}
+
+.sv-camera--ng {
+  border-color: var(--danger);
+}
+
+.sv-camera-view {
+  width: 100%;
+  height: 100%;
+}
+
+.sv-camera-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  text-align: center;
+  background: var(--surface);
+  color: var(--text);
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sv-camera-cover span:first-child {
+  font-size: 2.4em;
+}
+
+.sv-camera-status {
+  min-height: 1.2em;
+  text-align: center;
+  font-size: var(--font-sub);
+  color: var(--text-sub);
+}
+
+.sv-camera-aspect {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 5;
+  width: auto;
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: var(--font-sub);
+}
+
+/* ---- 入力 ---- */
+
+.sv-row {
+  display: flex;
+  gap: 6px;
+}
+
+.sv-input,
+.sv-textarea,
+.sv-select {
+  width: 100%;
+  min-height: var(--tap-min);
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+
+.sv-textarea {
+  min-height: 80px;
+  font-family: var(--font-mono);
+  font-size: var(--font-sub);
+  background: var(--surface-2);
+  resize: vertical;
+}
+
+.sv-row .sv-btn {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+/* ---- 設定 ---- */
+
+.sv-settings {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: var(--font-sub);
+}
+
+.sv-settings > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 32px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.sv-settings > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sv-settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.sv-preset-row {
+  display: flex;
+  gap: 6px;
+}
+
+.sv-preset {
+  flex: 1;
+  min-height: var(--tap-min);
+  padding: 8px 4px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-sub);
+  font: inherit;
+  font-size: var(--font-sub);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sv-preset[aria-pressed='true'] {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--surface);
+}
+
+.sv-preset-desc {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  color: var(--text-sub);
+  line-height: 1.7;
+}
+
+.sv-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sv-field label {
+  font-weight: 700;
+  color: var(--text-sub);
+}
+
+.sv-field input[type='range'] {
+  width: 120px;
+  accent-color: var(--teal);
+}
+
+.sv-field .sv-select {
+  width: auto;
+  min-height: 36px;
+}
+
+/* ---- リスト ---- */
+
+.sv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sv-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sv-list-title {
+  font-size: var(--font-sub);
+  font-weight: 700;
+  color: var(--text-sub);
+}
+
+.sv-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--teal);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.sv-item--recv {
+  border-left-color: var(--blue);
+  display: block;
+}
+
+.sv-item--recv .sv-code,
+.sv-item--recv .sv-name,
+.sv-item--recv .sv-sub {
+  display: block;
+}
+
+.sv-item-num {
+  min-width: 24px;
+  text-align: center;
+  font-size: var(--font-sub);
+  font-weight: 700;
+  color: var(--text-sub);
+}
+
+.sv-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* リスト行のうち「タップで拡大」する領域 */
+.sv-item-tap {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap-min);
+  display: block;
+  padding: 4px 0;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sv-item-tap .sv-code,
+.sv-item-tap .sv-sub {
+  display: block;
+}
+
+.sv-code {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.sv-name {
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+.sv-sub {
+  margin-top: 2px;
+  font-size: var(--font-sub);
+  color: var(--text-sub);
+}
+
+.sv-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.sv-badge {
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-sub);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.sv-badge--genre {
+  background: var(--blue-soft);
+  color: var(--blue);
+  border-color: var(--blue-soft);
+}
+
+.sv-badge--pop {
+  background: var(--amber-soft);
+  color: var(--amber);
+  border-color: var(--amber-soft);
+}
+
+.sv-badge--order {
+  background: var(--red-soft);
+  color: var(--danger);
+  border-color: var(--red-soft);
+}
+
+.sv-badge--end {
+  background: var(--teal-soft);
+  color: var(--teal);
+  border-color: var(--teal-soft);
+}
+
+.sv-badge--expiry {
+  background: var(--amber-soft);
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+.sv-warn {
+  background: var(--amber-soft);
+  color: var(--amber);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: var(--font-sub);
+  line-height: 1.6;
+}
+
+.sv-error {
+  background: var(--red-soft);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: var(--font-sub);
+  line-height: 1.6;
+}
+
+/* ---- モーダル ---- */
+
+.sv-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(0 0 0 / 0.75);
+  border: none;
+}
+
+.sv-modal-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: var(--max-width);
+  padding: 18px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.sv-modal-canvas {
+  max-width: 100%;
+  background: var(--surface);
+}
+
+.sv-modal-code {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  word-break: break-all;
+  text-align: center;
+}
+
+.sv-modal-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--blue);
+  text-align: center;
+}
+
+.sv-modal-meta {
+  font-size: var(--font-sub);
+  color: var(--text-sub);
+  text-align: center;
+  line-height: 1.7;
+}
+
+.sv-modal-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.sv-modal-nav .sv-btn {
+  width: auto;
+  padding: 8px 18px;
+}
+
+.sv-modal-hint {
+  font-size: var(--font-sub);
+  color: var(--text-sub);
+}
+
+/* ---- トースト ---- */
+
+.sv-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: calc(100% - 24px);
+  max-width: var(--max-width);
+  transform: translateX(-50%);
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: var(--font-sub);
+  line-height: 1.5;
+}
+
+.sv-toast--warn {
+  border-color: var(--amber);
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.sv-toast-msg {
+  flex: 1;
+  min-width: 0;
+}
+
+.sv-toast .sv-btn {
+  width: auto;
+  min-height: 32px;
+  padding: 4px 12px;
+  font-size: var(--font-sub);
+  border-color: var(--teal);
+  color: var(--teal);
+  background: transparent;
+}
+
+.sv-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
