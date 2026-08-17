@@ -10,12 +10,15 @@ import {
   saveApiKey,
   setApiKeyStores,
 } from './apikey';
+import { __resetBootMigrationForTest, bootMigration } from '@core/migrate';
 import {
   BIN_MEMO_HISTORY_MAX,
   BIN_MEMO_TAG,
+  loadBinMemoDraft,
   loadBinMemoHistory,
   loadShiwakeState,
   pushBinMemoHistory,
+  saveBinMemoDraft,
   saveShiwakeState,
 } from './state';
 
@@ -29,35 +32,40 @@ beforeEach(() => {
   local = createMemoryBackend();
   setStorageBackend(store);
   setApiKeyStores(session, local);
+  __resetBootMigrationForTest();
 });
 
 function seed(key: string, value: unknown): void {
   store.setItem(key, JSON.stringify(value));
 }
 
-// ---------------------------------------------------------------- v1 取込
+// ---------------------------------------------------------------- v1 取込（migrate 経由）
+
+/** v1 の sb_* を置いて、起動時と同じ順序（bootMigration → 画面の読み込み）を再現する */
+function bootWithLegacy(): void {
+  seed(LEGACY_KEYS.sbItems, [
+    { name: 'ドンベエ', code: '14901234567891', jan: '', qty_per_case: 12, cases: 2, cartIndex: 0, memo: 'メモ' },
+    { name: 'カップヌードル', code: '4902000000004', qty_per_case: null, cases: 1, cartIndex: 1 },
+  ]);
+  seed(LEGACY_KEYS.sbCarts, [
+    { index: 0, label: '仕器A 本店', delivery_date: '2026-08-17' },
+    { index: 1, label: '仕器B', delivery_date: null },
+  ]);
+  seed(LEGACY_KEYS.sbAlertWords, ['どんべえ']);
+  bootMigration();
+}
 
 describe('loadShiwakeState', () => {
   it('何も無ければ空の state', () => {
-    const { state, importedFromV1 } = loadShiwakeState();
-    expect(state.items).toEqual([]);
-    expect(importedFromV1).toBe(false);
+    expect(loadShiwakeState().items).toEqual([]);
   });
 
-  it('sb_items / sb_carts / sb_alert_words を初回取込する', () => {
-    seed(LEGACY_KEYS.sbItems, [
-      { name: 'ドンベエ', code: '14901234567891', jan: '', qty_per_case: 12, cases: 2, cartIndex: 0, memo: 'メモ' },
-      { name: 'カップヌードル', code: '4902000000004', qty_per_case: null, cases: 1, cartIndex: 1 },
-    ]);
-    seed(LEGACY_KEYS.sbCarts, [
-      { index: 0, label: '仕器A 本店', delivery_date: '2026/8/17' },
-      { index: 1, label: '仕器B', delivery_date: null },
-    ]);
-    seed(LEGACY_KEYS.sbAlertWords, ['どんべえ']);
+  it('sb_items / sb_carts / sb_alert_words が migrate 経由で読める', () => {
+    bootWithLegacy();
 
-    const { state, importedFromV1 } = loadShiwakeState();
-    expect(importedFromV1).toBe(true);
+    const state = loadShiwakeState();
     expect(state.items).toHaveLength(2);
+    // 明細コード（ITF-14）→ JAN と要注意判定は仕分番長側で補完する
     expect(state.items[0]).toMatchObject({ name: 'ドンベエ', jan: '4901234567894', memo: 'メモ', isAlert: true });
     expect(state.items[1]).toMatchObject({ qtyPerCase: null, isAlert: false });
     expect(state.carts[0]!.deliveryDate).toBe('2026-08-17');
@@ -65,30 +73,30 @@ describe('loadShiwakeState', () => {
     expect(state.alertWords).toEqual(['どんべえ']);
   });
 
-  it('取込後は KEYS.shiwake と meta を書き、旧キーは残す', () => {
-    seed(LEGACY_KEYS.sbAlertWords, ['UFO']);
-    loadShiwakeState();
+  it('取込後は KEYS.shiwake と meta が書かれ、旧キーは残る', () => {
+    bootWithLegacy();
 
-    expect(readJson<ShiwakeState>(KEYS.shiwake)?.alertWords).toEqual(['UFO']);
-    expect(readJson<MetaV2>(KEYS.shiwakeMeta)).toMatchObject({
-      schemaVersion: 2,
-      migratedFrom: ['sb_items', 'sb_carts', 'sb_alert_words'],
-    });
+    expect(readJson<ShiwakeState>(KEYS.shiwake)?.alertWords).toEqual(['どんべえ']);
+    expect(readJson<MetaV2>(KEYS.shiwakeMeta)).toMatchObject({ schemaVersion: 2 });
+    expect(readJson<MetaV2>(KEYS.shiwakeMeta)?.migratedFrom).toEqual(
+      expect.arrayContaining([LEGACY_KEYS.sbItems, LEGACY_KEYS.sbCarts, LEGACY_KEYS.sbAlertWords]),
+    );
     // 旧キーは残置（v1 を壊さない）
     expect(store.getItem(LEGACY_KEYS.sbAlertWords)).not.toBeNull();
   });
 
-  it('KEYS.shiwake が既にあれば v1 を読まない', () => {
+  it('移行済み（meta あり）なら v1 を読み直さない', () => {
+    seed(KEYS.meta, { schemaVersion: 2, migratedAt: '2026-08-17T00:00:00.000Z', migratedFrom: [] });
     seed(KEYS.shiwake, { items: [], carts: [], alertWords: ['v2'], updatedAt: '' });
     seed(LEGACY_KEYS.sbAlertWords, ['v1']);
-    const { state, importedFromV1 } = loadShiwakeState();
-    expect(state.alertWords).toEqual(['v2']);
-    expect(importedFromV1).toBe(false);
+
+    expect(bootMigration()).toBeNull();
+    expect(loadShiwakeState().alertWords).toEqual(['v2']);
   });
 
   it('壊れた JSON でも起動できる', () => {
     store.setItem(KEYS.shiwake, '{broken');
-    expect(loadShiwakeState().state.items).toEqual([]);
+    expect(loadShiwakeState().items).toEqual([]);
   });
 
   it('保存と読み戻しができる', () => {
@@ -99,7 +107,43 @@ describe('loadShiwakeState', () => {
       updatedAt: '',
     };
     expect(saveShiwakeState(state)).toBe(true);
-    expect(loadShiwakeState().state.carts).toEqual(state.carts);
+    expect(loadShiwakeState().carts).toEqual(state.carts);
+  });
+
+  it('名前が空の明細は捨て、ラベル無しの明細には既定名を付ける', () => {
+    seed(KEYS.shiwake, {
+      items: [{ id: 'a', name: '', code: '', jan: '', qtyPerCase: null, cases: 0, cartIndex: 0, memo: '', isAlert: false }],
+      carts: [{ index: 0, label: '', deliveryDate: '' }],
+      alertWords: ['x', 'x', ''],
+      updatedAt: '',
+    });
+    const state = loadShiwakeState();
+    expect(state.items).toEqual([]);
+    expect(state.carts[0]!.label).toBe('明細1');
+    expect(state.alertWords).toEqual(['x']);
+  });
+});
+
+// ---------------------------------------------------------------- 便メモ下書き
+
+describe('便メモ下書き', () => {
+  it('v1 の sb_global_memo を migrate 経由で引き継ぐ', () => {
+    store.setItem(LEGACY_KEYS.sbGlobalMemo, '  22時便は要冷蔵あり  ');
+    bootMigration();
+
+    expect(loadBinMemoDraft()).toBe('22時便は要冷蔵あり');
+    // 履歴（notes）にも残る
+    expect(loadBinMemoHistory().map((n) => n.text)).toContain('22時便は要冷蔵あり');
+  });
+
+  it('KEYS.shiwakeMemoDraft に保存・読み戻しできる', () => {
+    expect(saveBinMemoDraft('下書き')).toBe(true);
+    expect(store.getItem(KEYS.shiwakeMemoDraft)).toBe(JSON.stringify('下書き'));
+    expect(loadBinMemoDraft()).toBe('下書き');
+  });
+
+  it('未保存なら空文字', () => {
+    expect(loadBinMemoDraft()).toBe('');
   });
 });
 
@@ -154,11 +198,13 @@ describe('pushBinMemoHistory', () => {
     expect(history.map((n) => n.id)).toEqual(['n5', 'n3', 'n1']);
   });
 
-  it('v2 履歴が無ければ v1 の sb_memo_history を表示に使う', () => {
+  it('v1 の sb_memo_history は migrate が Note へ変換したものを表示する', () => {
     seed(LEGACY_KEYS.sbMemoHistory, [{ date: '2026/8/16 10:00', text: '旧メモ' }, { date: '', text: '' }]);
+    bootMigration();
+
     const history = loadBinMemoHistory();
     expect(history).toHaveLength(1);
-    expect(history[0]).toMatchObject({ title: '2026/8/16 10:00', text: '旧メモ' });
+    expect(history[0]).toMatchObject({ title: '便メモ', text: '旧メモ', tag: BIN_MEMO_TAG });
   });
 });
 

@@ -536,7 +536,22 @@ hr.sep {
   aspect-ratio: 3 / 4;
 }
 
+/* スキャナが video / canvas を差し込む器（Preact の管理外） */
+.camerabox__view {
+  position: absolute;
+  inset: 0;
+}
+
+.camerabox__view video,
+.camerabox__view canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .camerabox__hint {
+  position: relative;
+  z-index: 1;
   text-align: center;
   color: var(--text-sub);
   font-size: var(--font-sub);
@@ -545,6 +560,7 @@ hr.sep {
 
 .camerabox__tools {
   position: absolute;
+  z-index: 2;
   top: 6px;
   right: 6px;
   display: flex;
@@ -987,6 +1003,40 @@ hr.sep {
 
 .kv__k {
   color: var(--text-sub);
+}
+
+/* 件数の照合表（移行レポート / バックアップ取込レポート） */
+
+.dtable {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--font-sub);
+}
+
+.dtable__row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto;
+  gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.dtable__row > span:not(:first-child) {
+  text-align: right;
+  min-width: 3em;
+}
+
+.dtable__row--head {
+  color: var(--text-sub);
+}
+
+.dtable__row--total {
+  border-bottom: none;
+  font-weight: 600;
+}
+
+.dtable--3 .dtable__row {
+  grid-template-columns: 1fr auto auto auto;
 }
 
 .pending {

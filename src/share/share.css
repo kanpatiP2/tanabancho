@@ -189,6 +189,14 @@
   height: 100%;
 }
 
+/* スキャナ（@scanner/camera）が差し込む video / canvas */
+.sv-camera-view video,
+.sv-camera-view canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .sv-camera-cover {
   position: absolute;
   inset: 0;

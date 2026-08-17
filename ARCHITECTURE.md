@@ -31,4 +31,7 @@
 - `alert` / `confirm` / `prompt` は禁止（ボトムシート + Undo付きトーストで代替）
 - 日時は ISO 8601 で保存し、表示変換は `core/datetime.ts` を使う
 - v1 の localStorage キー（`LEGACY_KEYS`）への書き込みは migrate.ts 以外禁止。読み取りも migrate 経由のみ
+  - 3エントリ（`src/app|share|shiwake/main.tsx`）は **描画前に `bootMigration()`** を呼ぶ。
+    各画面は v2 キーだけを読み、v1 取込を自前で実装しない（実装は migrate.ts に一本化）
+- スキャン入力の合流点は `src/app/scan-bridge.ts` 1箇所。intent 遷移は `@scanner/session` に委譲する
 - `npm test`（Vitest）と `npm run build`（tsc --noEmit 含む）が通ることを完了条件とする

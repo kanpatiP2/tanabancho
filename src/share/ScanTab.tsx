@@ -61,7 +61,9 @@ export function ScanTab() {
     try {
       // 動的 import: カメラ実装（html5-qrcode 等）を初期チャンクに載せない
       const { createScanner } = await import('@scanner/camera');
-      const adapter = await createScanner();
+      // fps / フォーカス / 読取枠は生成時に決まるため、その時点の設定を渡す
+      const c = camera.peek();
+      const adapter = await createScanner({ fps: c.fps, focusMode: c.focusMode, tall: c.tall });
       await adapter.start(VIDEO_ID, (raw) => {
         if (lockRef.current) return;
         lockRef.current = true;
@@ -76,9 +78,15 @@ export function ScanTab() {
     } catch {
       adapterRef.current = null;
       setCamState('unavailable');
-      setCamNote('カメラ準備中です。下の手入力をご利用ください');
+      setCamNote('カメラを開始できませんでした。下の手入力をご利用ください');
     }
   }, [submit]);
+
+  /** 設定変更の反映。停止中なら何もしない（次回の開始時に反映される） */
+  const restartCamera = useCallback(() => {
+    if (!adapterRef.current) return;
+    void stopCamera().then(() => setTimeout(() => void startCamera(), 300));
+  }, [startCamera, stopCamera]);
 
   useEffect(() => {
     const onHide = () => {
@@ -98,7 +106,14 @@ export function ScanTab() {
       <div class={`sv-camera${flash ? ` sv-camera--${flash}` : ''}`}>
         <div id={VIDEO_ID} class="sv-camera-view" />
         {camState === 'running' ? (
-          <button type="button" class="sv-btn sv-btn--ghost sv-camera-aspect" onClick={() => setCamera({ tall: !c.tall })}>
+          <button
+            type="button"
+            class="sv-btn sv-btn--ghost sv-camera-aspect"
+            onClick={() => {
+              setCamera({ tall: !c.tall });
+              restartCamera(); // 読取枠は生成時に決まるので作り直す
+            }}
+          >
             {c.tall ? '縦' : '横'}
           </button>
         ) : (
@@ -108,7 +123,7 @@ export function ScanTab() {
               {camState === 'starting'
                 ? '起動中...'
                 : camState === 'unavailable'
-                  ? 'カメラ準備中'
+                  ? 'カメラを開始できません'
                   : 'タップしてスキャン開始'}
             </span>
             {camState === 'unavailable' ? <span class="sv-sub">手入力でも登録できます</span> : null}
@@ -117,12 +132,7 @@ export function ScanTab() {
       </div>
       <div class="sv-camera-status">{camNote}</div>
 
-      <CameraSettings
-        onApply={() => {
-          if (!adapterRef.current) return;
-          void stopCamera().then(() => setTimeout(() => void startCamera(), 300));
-        }}
-      />
+      <CameraSettings onApply={restartCamera} />
 
       <form
         class="sv-row"

@@ -105,6 +105,8 @@ export interface StorageSchema {
   orders: OrderList[];
   shiwake: ShiwakeState;
   shiwakeMeta: MetaV2;
+  /** 便メモの下書き（プレーン文字列を JSON 化して保存） */
+  shiwakeMemoDraft: string;
   shareRecv: ScanItem[];
 }
 
@@ -131,11 +133,12 @@ const DEFAULTS: { [K in CollectionName]: () => StorageSchema[K] } = {
   orders: () => [],
   shiwake: emptyShiwakeState,
   shiwakeMeta: emptyMeta,
+  shiwakeMemoDraft: () => '',
   shareRecv: () => [],
 };
 
 /** 期待する JSON の器。合わなければ破損とみなして既定値を返す */
-const KIND: Record<CollectionName, 'array' | 'object'> = {
+const KIND: Record<CollectionName, 'array' | 'object' | 'string'> = {
   meta: 'object',
   settings: 'object',
   scans: 'array',
@@ -147,11 +150,13 @@ const KIND: Record<CollectionName, 'array' | 'object'> = {
   orders: 'array',
   shiwake: 'object',
   shiwakeMeta: 'object',
+  shiwakeMemoDraft: 'string',
   shareRecv: 'array',
 };
 
-function matchesKind(value: unknown, kind: 'array' | 'object'): boolean {
+function matchesKind(value: unknown, kind: 'array' | 'object' | 'string'): boolean {
   if (kind === 'array') return Array.isArray(value);
+  if (kind === 'string') return typeof value === 'string';
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
@@ -218,6 +223,9 @@ export const setShiwake = (v: ShiwakeState): boolean => setCollection('shiwake',
 
 export const getShiwakeMeta = (): MetaV2 => getCollection('shiwakeMeta');
 export const setShiwakeMeta = (v: MetaV2): boolean => setCollection('shiwakeMeta', v);
+
+export const getShiwakeMemoDraft = (): string => getCollection('shiwakeMemoDraft');
+export const setShiwakeMemoDraft = (v: string): boolean => setCollection('shiwakeMemoDraft', v);
 
 export const getShareRecv = (): ScanItem[] => getCollection('shareRecv');
 export const setShareRecv = (v: ScanItem[]): boolean => setCollection('shareRecv', v);

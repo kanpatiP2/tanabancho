@@ -7,8 +7,7 @@
 import { signal } from '@preact/signals';
 import { resolveCode } from '@core/jan';
 import { decodeShareDataDetailed, extractDataParam } from '@core/share-codec';
-import { readJson, readRaw, writeJson } from '@core/storage';
-import { LEGACY_KEYS } from '@core/types';
+import { getCollection, readJson, writeJson } from '@core/storage';
 import type { ScanItem, Settings, ShareEnvelopeV2 } from '@core/types';
 
 // ---------------------------------------------------------------- キー
@@ -20,7 +19,7 @@ export const SHARE_CAMERA_KEY = 'tb.share.v2.camera';
 
 interface ScannedStore {
   v: 1;
-  /** v1 の tanabancho_share / sellfloor_share を取り込み済みか */
+  /** v1 由来のスキャン（migrate が KEYS.shareRecv へ変換したもの）を引き継ぎ済みか */
   legacyImported: boolean;
   items: ScanItem[];
 }
@@ -99,16 +98,6 @@ function newId(): string {
   return `sh-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** 'HH:MM' しか持たない v1 データを今日の日時として復元する（_approxDate: true） */
-function createdAtFromHHMM(hhmm: string, base: Date): string {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
-  const d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
-  if (m) {
-    d.setHours(Number(m[1]), Number(m[2]), 0, 0);
-  }
-  return d.toISOString();
-}
-
 function makeScanItem(jan: string, createdAt: string, legacyId?: string, approx = false): ScanItem {
   return {
     id: newId(),
@@ -140,39 +129,20 @@ function persistScanned(legacyImported = true): void {
 }
 
 /**
- * v1 の共有ツールが書いていたキーを読み取って取り込む（初回のみ）。
- * これらは共有ビュー自身が書いていたキーなので、本体の migrate.ts の管轄外。
- * 書き戻しは一切しない（読み取り専用）。
+ * v1 の共有ツールが書いていたキー（tanabancho_share / sellfloor_share）は
+ * **core/migrate.ts が KEYS.shareRecv へ変換済み**。ここではその結果を読むだけで、
+ * LEGACY_KEYS には一切触れない（取込の実装を二重に持たない）。
  */
-function importLegacyScans(): ScanItem[] {
-  const now = new Date();
+function inheritedScans(): ScanItem[] {
   const out: ScanItem[] = [];
   const seen = new Set<string>();
-  for (const key of [LEGACY_KEYS.shareTanabancho, LEGACY_KEYS.shareSellfloor]) {
-    const raw = readRaw(key);
-    if (!raw) continue;
-    let rows: unknown;
-    try {
-      rows = JSON.parse(raw);
-    } catch {
-      continue;
-    }
-    if (!Array.isArray(rows)) continue;
-    for (const row of rows) {
-      if (typeof row !== 'object' || row === null) continue;
-      const r = row as Record<string, unknown>;
-      const code = typeof r.code === 'string' ? r.code.trim() : '';
-      if (!code || seen.has(code)) continue;
-      seen.add(code);
-      out.push(
-        makeScanItem(
-          code,
-          createdAtFromHHMM(typeof r.time === 'string' ? r.time : '', now),
-          typeof r.id === 'string' ? r.id : undefined,
-          true,
-        ),
-      );
-    }
+  for (const item of getCollection('shareRecv')) {
+    const jan = typeof item?.jan === 'string' ? item.jan.trim() : '';
+    if (!jan || seen.has(jan)) continue;
+    seen.add(jan);
+    const createdAt =
+      typeof item.createdAt === 'string' && item.createdAt ? item.createdAt : new Date().toISOString();
+    out.push(makeScanItem(jan, createdAt, item._legacyId, item._approxDate === true));
   }
   return out;
 }
@@ -189,9 +159,8 @@ export function initShareState(): void {
   scanned.value = items;
 
   if (!store || store.legacyImported !== true) {
-    const legacy = importLegacyScans();
     const existing = new Set(items.map((i) => i.jan));
-    const fresh = legacy.filter((i) => !existing.has(i.jan));
+    const fresh = inheritedScans().filter((i) => !existing.has(i.jan));
     if (fresh.length > 0) {
       scanned.value = [...fresh, ...items];
       showToast(`旧バージョンのスキャン ${fresh.length}件を引き継ぎました`);

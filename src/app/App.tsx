@@ -8,6 +8,7 @@ import './ui.css';
 import { loadAll, settings, setStorageErrorHandler } from './store';
 import { navBadges } from './derived';
 import { ToastHost, toast } from './components/Toast';
+import { MigrationSheet } from './MigrationSheet';
 import { ScanTab } from './tabs/ScanTab';
 import { ListTab } from './tabs/ListTab';
 import { TodayTab } from './tabs/TodayTab';
@@ -104,6 +105,7 @@ export function App() {
         {tab === 'more' ? <MoreTab /> : null}
       </div>
       <ToastHost />
+      <MigrationSheet />
       <BottomNav />
     </div>
   );

@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { buildShareUrl, encodeShareData } from '@core/share-codec';
+import { __resetBootMigrationForTest, bootMigration } from '@core/migrate';
 import { createMemoryBackend, setStorageBackend } from '@core/storage';
 import { LEGACY_KEYS } from '@core/types';
 import {
@@ -20,6 +21,7 @@ const backend = createMemoryBackend();
 
 beforeAll(() => {
   setStorageBackend(backend);
+  __resetBootMigrationForTest();
   // v1 の共有ツールが残したキー（自社版・汎用版の両方）
   backend.setItem(
     LEGACY_KEYS.shareTanabancho,
@@ -29,10 +31,12 @@ beforeAll(() => {
     ]),
   );
   backend.setItem(LEGACY_KEYS.shareSellfloor, JSON.stringify([{ id: 'sf1', code: '4901234567894', time: '09:00' }]));
+  // 共有ビューの起動と同じ順序: 描画前に migrate（v1 → KEYS.shareRecv）を済ませる
+  bootMigration();
 });
 
 describe('initShareState', () => {
-  it('旧キーを初回のみ取り込み、重複コードは1件にまとめる', () => {
+  it('migrate が変換した v1 スキャンを初回のみ引き継ぎ、重複コードは1件にまとめる', () => {
     initShareState();
     expect(scanned.value.map((i) => i.jan)).toEqual(['4901234567894', '4900000000005']);
     expect(scanned.value[0]!._legacyId).toBe('sh1');

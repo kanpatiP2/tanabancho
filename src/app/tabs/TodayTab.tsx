@@ -10,7 +10,7 @@ import { Badge, Card, Empty } from '../components/primitives';
 import { toast } from '../components/Toast';
 import { goTab } from '../App';
 import { todayFeed, type FeedEntry } from '../derived';
-import { scanIntent } from '../scan-bridge';
+import { setScanIntent } from '../scan-bridge';
 import {
   addScan,
   emptyScan,
@@ -81,7 +81,7 @@ export function TodayTab() {
           type="button"
           class="btn btn--primary btn--block"
           onClick={() => {
-            scanIntent.value = 'compCheck';
+            setScanIntent('compCheck');
             goTab('scan');
           }}
         >

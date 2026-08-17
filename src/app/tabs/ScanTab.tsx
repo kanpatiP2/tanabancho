@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { CodeSource, ResolvedCode, ScanIntent } from '@core/types';
 import { todayLocal } from '@core/datetime';
-import { Card, Check, Empty, Field, JanText, Pending } from '../components/primitives';
+import { Card, Check, Empty, Field, JanText } from '../components/primitives';
 import { toast, toastUndo } from '../components/Toast';
 import { ExpiryPad } from '../scan/ExpiryPad';
 import { PopPanel } from '../scan/PopPanel';
@@ -19,8 +19,10 @@ import {
   dispatchCode,
   feedback,
   probeCamera,
+  restartCamera,
   scanIntent,
   setCodeHandler,
+  setScanIntent,
   stopCamera,
   toggleCamera,
 } from '../scan-bridge';
@@ -139,9 +141,10 @@ export function ScanTab() {
     return () => setCodeHandler(null);
   }, [autoExpiry]);
 
-  // ---- ウェッジ（settings.inputSource === 'wedge' のとき有効）
+  // ---- ウェッジ（settings.inputSource === 'wedge' のとき有効）。カメラとは排他
   useEffect(() => {
     if (settings.value.inputSource !== 'wedge') return;
+    void stopCamera();
     return attachWedge();
   }, [settings.value.inputSource]);
 
@@ -150,6 +153,16 @@ export function ScanTab() {
     void probeCamera();
     return () => void stopCamera();
   }, []);
+
+  // ---- カメラ設定（プリセット / fps / フォーカス / 縦長）の変更を稼働中のカメラへ反映
+  useEffect(() => {
+    void restartCamera();
+  }, [
+    settings.value.cameraPreset,
+    settings.value.cameraFps,
+    settings.value.cameraFocusMode,
+    settings.value.tallBarcodeMode,
+  ]);
 
   const activeOrder = orderLists.value.find((o) => o.id === ensureOrderListIdSafe());
 
@@ -261,7 +274,7 @@ function ModeChips() {
           class="chip"
           aria-pressed={scanIntent.value === m.value}
           onClick={() => {
-            scanIntent.value = m.value;
+            setScanIntent(m.value);
             compPending.value = null;
           }}
         >
@@ -280,24 +293,28 @@ function CameraBox() {
   return (
     <div
       class={tall ? 'camerabox camerabox--tall' : 'camerabox'}
-      id={VIDEO_CONTAINER_ID}
       onClick={() => {
         if (state === 'unavailable') return;
         void toggleCamera();
       }}
     >
+      {/* スキャナが video / canvas を差し込む器。Preact は中身に触らない */}
+      <div class="camerabox__view" id={VIDEO_CONTAINER_ID} />
       {state === 'running' ? null : (
         <div class="camerabox__hint">
           {state === 'unavailable' ? (
             <>
-              <p>
-                カメラは <Pending>P1-C の scanner/camera 実装待ち</Pending>
-              </p>
+              <p>カメラを開始できませんでした</p>
               <p class="muted">{cameraError.value}</p>
               <p class="muted">🔍 から手入力できます</p>
             </>
           ) : state === 'starting' ? (
             <p>起動中…</p>
+          ) : wedge ? (
+            <>
+              <p>ウェッジ入力モード</p>
+              <p class="muted">リーダーで読み取ると登録されます（タップでカメラも使えます）</p>
+            </>
           ) : (
             <p>タップでカメラ開始 / 停止</p>
           )}

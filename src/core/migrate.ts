@@ -787,6 +787,11 @@ export function runMigration(migratedAt: ISODateTime = nowIso()): MigrationRepor
 
   const meta: MetaV2 = { schemaVersion: 2, migratedAt, migratedFrom };
 
+  // 便メモの「現在の下書き」は履歴（notes）に加えて下書きキーにも引き継ぐ。
+  // v1 は sb_global_memo が編集中テキストそのものだったので、これが無いと
+  // 移行直後にメモ欄が空になってしまう（履歴には残るがユーザー体験としては後退）。
+  const memoDraft = (rawSbMemo ?? '').trim();
+
   // ---- 一括書き込み（meta は最後。失敗したら全部巻き戻す） ----
   const result = writeBatch([
     collectionEntry('settings', getCollection('settings')),
@@ -800,6 +805,7 @@ export function runMigration(migratedAt: ISODateTime = nowIso()): MigrationRepor
     collectionEntry('shareRecv', shareRecv),
     collectionEntry('shiwake', shiwake.state),
     collectionEntry('shiwakeMeta', meta),
+    ...(memoDraft ? [collectionEntry('shiwakeMemoDraft', memoDraft)] : []),
     collectionEntry('meta', meta),
   ]);
 
@@ -812,6 +818,43 @@ export function runMigration(migratedAt: ISODateTime = nowIso()): MigrationRepor
 
   base.ran = true;
   return base;
+}
+
+// ---------------------------------------------------------------- 起動時フック
+
+let bootReport: MigrationReport | null = null;
+
+/**
+ * 各エントリ（本体 / 共有 / 仕分番長）の起動時に **描画前** へ1回だけ呼ぶ。
+ * 必要なときだけ移行を実行し、結果を保持する。同一セッション内では冪等。
+ *
+ * @returns 実際に移行したときだけレポート。不要（移行済み）なら null
+ */
+export function bootMigration(): MigrationReport | null {
+  if (bootReport) return bootReport;
+  if (!needsMigration()) return null;
+  bootReport = runMigration();
+  return bootReport;
+}
+
+/** bootMigration の結果を後から参照する（描画後のシート/トースト表示用） */
+export function lastMigrationReport(): MigrationReport | null {
+  return bootReport;
+}
+
+/** テスト用。bootMigration のキャッシュを捨てる */
+export function __resetBootMigrationForTest(): void {
+  bootReport = null;
+}
+
+/**
+ * 旧 `sb_api_key`（v1 仕分番長の Gemini APIキー）。
+ * バックアップにも v2 コレクションにも載せない値なので移行対象外だが、
+ * LEGACY_KEYS を読むのは migrate.ts だけ、という規約を守るためここに置く。
+ */
+export function readLegacyApiKey(): string | null {
+  const raw = readRaw(LEGACY_KEYS.sbApiKey);
+  return raw && raw.trim() ? raw.trim() : null;
 }
 
 function convertMany<T>(

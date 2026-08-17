@@ -177,6 +177,42 @@ export function isDuplicateJan(jan: string): boolean {
   return scans.value.some((s) => s.jan === jan);
 }
 
+/** 'jan@YYYY-MM-DDTHH:MM'。共有URL往復では分単位までしか復元できないため分で丸める */
+function janTimeKey(s: ScanItem): string {
+  return `${s.jan}@${String(s.createdAt ?? '').slice(0, 16)}`;
+}
+
+/**
+ * 共有URL / 外部から受け取った履歴を結合する（既存は消さない）。
+ *
+ * 重複判定は3系統。id と _legacyId は同じ名前空間で突き合わせる
+ * （自分が送ったURLを取り込み直すと、受信側の _legacyId が送信元の id になるため）。
+ *   1. id / _legacyId の一致
+ *   2. jan + 記録時刻（分）の一致
+ * @returns 実際に追加した件数
+ */
+export function mergeIncomingScans(incoming: readonly ScanItem[]): number {
+  const ids = new Set<string>();
+  const janTimes = new Set<string>();
+  for (const s of scans.value) {
+    if (s.id) ids.add(s.id);
+    if (s._legacyId) ids.add(s._legacyId);
+    janTimes.add(janTimeKey(s));
+  }
+
+  const added: ScanItem[] = [];
+  for (const item of incoming) {
+    const keys = [item.id, item._legacyId].filter((k): k is string => Boolean(k));
+    if (keys.some((k) => ids.has(k)) || janTimes.has(janTimeKey(item))) continue;
+    keys.forEach((k) => ids.add(k));
+    janTimes.add(janTimeKey(item));
+    added.push(item);
+  }
+
+  if (added.length) commitScans([...added, ...scans.value]);
+  return added.length;
+}
+
 // ---------------------------------------------------------------- 学習辞書（Product）
 
 function commitProducts(next: Record<string, Product>): void {
@@ -428,6 +464,7 @@ const STORAGE_LABELS: Record<string, string> = {
   [KEYS.orders]: '発注リスト',
   [KEYS.shiwake]: '仕分番長',
   [KEYS.shiwakeMeta]: '仕分メタ',
+  [KEYS.shiwakeMemoDraft]: '便メモ下書き',
   [KEYS.shareRecv]: '共有受信',
 };
 

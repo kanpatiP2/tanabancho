@@ -1,20 +1,25 @@
 /**
- * スキャン入力の薄い呼び出し層。
+ * スキャン入力の合流点。カメラ / ウェッジ / 手入力をここで1本にまとめ、
+ * 意図（ScanIntent）の切り替えは `@scanner/session` のステートマシンに委譲する。
  *
- * P1-C の `src/scanner/session.ts`（ステートマシン本体）がまだ無いため、
- * `@core/types` の ScanIntent / OnCodeInput / ScannerAdapter だけに依存した
- * 差し替え可能なブリッジをここに置く。session.ts が入ったら
- * `attachCamera` / `dispatchCode` の中身を委譲に置き換えるだけで済む。
- *
- * - createScanner() は現在 throw する（P1-C 未実装）→ 例外を握って
- *   `cameraState` を 'unavailable' にし、UI はプレースホルダ＋手入力に落ちる
+ * 責務分担:
+ * - `@scanner/session` … intent の遷移・field の one-shot 復帰・期限提案の保留（純ロジック）
+ * - `@scanner/camera`  … BarcodeDetector / html5-qrcode のアダプタ
+ * - `@scanner/wedge`   … Bluetooth リーダーの keydown 組み立て
+ * - このモジュール      … 上記3つと本体UI（signal / store）の結線だけ
  */
 import { signal } from '@preact/signals';
-import type { CodeSource, ResolvedCode, ScanIntent, ScannerAdapter } from '@core/types';
-import { resolveCode } from '@core/jan';
-import { createScanner } from '@scanner/camera';
+import type { CodeSource, ResolvedCode, ScanIntent, ScannerAdapter, Settings } from '@core/types';
+import { createScanner, type ScannerOptions } from '@scanner/camera';
+import {
+  createScanSession,
+  type FieldScanEvent,
+  type FieldTarget,
+  type RejectEvent,
+  type ScanEvent,
+} from '@scanner/session';
 import { startWedgeListener } from '@scanner/wedge';
-import { boxJanLookup } from './store';
+import { boxJanLookup, products, settings } from './store';
 
 export const VIDEO_CONTAINER_ID = 'tb-camera';
 
@@ -22,40 +27,114 @@ export type CameraState = 'idle' | 'starting' | 'running' | 'unavailable';
 
 export const cameraState = signal<CameraState>('idle');
 export const cameraError = signal<string>('');
-/** 現在のスキャン意図。モードチップと連動する */
+/** 現在のスキャン意図。モードチップと連動する（更新は setScanIntent 経由） */
 export const scanIntent = signal<ScanIntent>('capture');
 
 let adapter: ScannerAdapter | null = null;
 let handler: ((r: ResolvedCode, source: CodeSource) => void) | null = null;
+let fieldHandler: ((ev: FieldScanEvent) => void) | null = null;
+let rejectHandler: ((ev: RejectEvent) => void) | null = null;
+
+// ---------------------------------------------------------------- セッション
+
+/** intent 別の受け口はすべて同じハンドラへ流す（振り分けはタブ側が intent を見て行う） */
+function forward(ev: ScanEvent): void {
+  handler?.(ev.resolved, ev.source);
+}
+
+const session = createScanSession(
+  {
+    boxJanLookup,
+    lookupProduct: (jan) => products.value[jan] ?? null,
+    onCapture: forward,
+    onExpiry: forward,
+    onPop: forward,
+    onOrder: forward,
+    onCompCheck: forward,
+    onField: (ev) => fieldHandler?.(ev),
+    onReject: (ev) => rejectHandler?.(ev),
+    onIntentChange: (next) => {
+      scanIntent.value = next;
+    },
+  },
+  // v1 は1件読むごとにカメラを止めていたが、v2 は camera.ts の deduper が
+  // 同一コードの連投を抑えるので流し読みを続けられる（止めたいときはタップで停止）
+  { continuous: true },
+);
 
 /** 読み取り結果の受け口を差し替える（タブ側が useEffect で登録する） */
 export function setCodeHandler(fn: ((r: ResolvedCode, source: CodeSource) => void) | null): void {
   handler = fn;
 }
 
-/** 生コードを正規化して現在のハンドラに流す。手入力もここを通す */
+/** field（箱JAN 登録・返品/客注/競合の JAN 欄など）の流し込み先 */
+export function setFieldHandler(fn: ((ev: FieldScanEvent) => void) | null): void {
+  fieldHandler = fn;
+}
+
+/** 空文字・URL などで受け付けなかったときの通知先 */
+export function setRejectHandler(fn: ((ev: RejectEvent) => void) | null): void {
+  rejectHandler = fn;
+}
+
+/** モードチップからの intent 切替。signal は onIntentChange 経由で更新される */
+export function setScanIntent(intent: ScanIntent, opts?: { sticky?: boolean }): void {
+  session.setIntent(intent, opts);
+}
+
+/** 1件だけ読み取って直前の intent に戻る流し込みを開始する */
+export function beginFieldScan(target: FieldTarget): void {
+  session.beginFieldScan(target);
+}
+
+export function cancelFieldScan(): void {
+  session.cancelFieldScan();
+}
+
+/** 読み取り後もスキャナを止めないか（既定 false = 1件ごとに停止） */
+export function setContinuousScan(continuous: boolean): void {
+  session.setContinuous(continuous);
+}
+
+/** 生コードを正規化して現在のハンドラに流す。カメラ・ウェッジ・手入力すべてここを通る */
 export function dispatchCode(raw: string, source: CodeSource): ResolvedCode | null {
-  const clean = raw.replace(/\s+/g, '');
+  const clean = String(raw ?? '').replace(/\s+/g, '');
   if (!clean) return null;
   // URL/記号混じりは弾く（legacy と同じガード）
   if (/^https?:/i.test(clean) || /[^0-9A-Za-z-]/.test(clean)) return null;
-  const resolved = resolveCode(clean, boxJanLookup);
-  handler?.(resolved, source);
-  return resolved;
+  const result = session.input(clean, source);
+  return result.ok ? result.resolved : null;
+}
+
+// ---------------------------------------------------------------- カメラ
+
+/** 設定 → スキャナオプション。プリセットは設定画面が fps/focus に展開済み */
+export function cameraOptionsFromSettings(s: Settings): ScannerOptions {
+  const fps = Number.isFinite(s.cameraFps) ? Math.min(30, Math.max(1, Math.trunc(s.cameraFps))) : 5;
+  return {
+    fps,
+    focusMode: s.cameraFocusMode === 'continuous' ? 'continuous' : '',
+    tall: s.tallBarcodeMode === true,
+  };
+}
+
+function cameraUsable(): boolean {
+  return (
+    typeof navigator !== 'undefined' &&
+    typeof navigator.mediaDevices?.getUserMedia === 'function' &&
+    typeof document !== 'undefined'
+  );
 }
 
 /**
  * カメラが使えるかだけを確認する（起動はしない）。
- * P1-C 未実装のうちは createScanner が throw するので 'unavailable' になり、
- * UI は最初からプレースホルダ＋手入力を出せる。
+ * getUserMedia が無い環境では 'unavailable' にして、UI を手入力へ寄せる。
  */
 export async function probeCamera(): Promise<void> {
-  if (cameraState.value !== 'idle' || adapter) return;
-  try {
-    adapter = await createScanner();
-  } catch (e) {
+  if (cameraState.value !== 'idle') return;
+  if (!cameraUsable()) {
     cameraState.value = 'unavailable';
-    cameraError.value = e instanceof Error ? e.message : String(e);
+    cameraError.value = 'この端末・ブラウザではカメラを利用できません（HTTPS でない場合もここに来ます）';
   }
 }
 
@@ -63,7 +142,8 @@ export async function startCamera(): Promise<void> {
   if (cameraState.value === 'running' || cameraState.value === 'starting') return;
   cameraState.value = 'starting';
   try {
-    adapter = adapter ?? (await createScanner());
+    // 設定を反映するため毎回作り直す（fps / focusMode / 読取枠は生成時に決まる）
+    adapter = await createScanner(cameraOptionsFromSettings(settings.value));
     await adapter.start(VIDEO_CONTAINER_ID, (raw) => dispatchCode(raw, 'camera'));
     cameraState.value = 'running';
     cameraError.value = '';
@@ -75,8 +155,10 @@ export async function startCamera(): Promise<void> {
 }
 
 export async function stopCamera(): Promise<void> {
+  const current = adapter;
+  adapter = null;
   try {
-    await adapter?.stop();
+    await current?.stop();
   } catch {
     /* 停止失敗は無視（すでに停止済み等） */
   }
@@ -90,11 +172,20 @@ export async function toggleCamera(): Promise<void> {
   else await startCamera();
 }
 
+/** 設定変更（縦長切替・fps・フォーカス）を反映する。停止中なら何もしない */
+export async function restartCamera(): Promise<void> {
+  if (cameraState.value !== 'running') return;
+  await stopCamera();
+  await startCamera();
+}
+
+// ---------------------------------------------------------------- ウェッジ
+
 /** キーボードウェッジ。返り値は解除関数 */
 export function attachWedge(): () => void {
-  return startWedgeListener(((code: string, source: CodeSource) => {
+  return startWedgeListener((code, source) => {
     dispatchCode(code, source);
-  }) as Parameters<typeof startWedgeListener>[0]);
+  });
 }
 
 /** 端末の触覚フィードバック（対応端末のみ） */

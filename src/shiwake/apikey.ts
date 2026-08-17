@@ -9,7 +9,8 @@
  */
 
 import type { StorageBackend } from '@core/storage';
-import { readLegacyApiKey } from './legacy';
+// LEGACY_KEYS を読むのは core/migrate.ts だけ、という規約に合わせる
+import { readLegacyApiKey } from '@core/migrate';
 
 export const API_KEY_STORAGE_KEY = 'sb.v2.apikey';
 

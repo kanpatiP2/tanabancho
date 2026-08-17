@@ -1,22 +1,23 @@
 /**
  * 仕分番長の永続化。localStorage への直接アクセスはせず core/storage 経由。
+ *
+ * v1（sb_* キー）からの取込は **core/migrate.ts が唯一の実装**。
+ * 起動時に `bootMigration()` が KEYS.shiwake / KEYS.notes / KEYS.shiwakeMemoDraft を
+ * 書き終えているので、このモジュールは v2 キーを読むだけでよい。
  */
 
-import { readJson, writeJson } from '@core/storage';
+import { getCollection, readJson, setCollection, writeJson } from '@core/storage';
 import { formatDateTime, nowIso } from '@core/datetime';
 import {
   KEYS,
   NOTE_COLORS,
   type CustomerOrder,
-  type MetaV2,
   type Note,
   type Product,
+  type ShiwakeItem,
   type ShiwakeState,
 } from '@core/types';
-import { readLegacyBinMemo, readLegacyMemoHistory, readLegacyShiwakeState } from './legacy';
-
-/** 便メモの下書き。KEYS に無い仕分番長ローカルのキー（統合時に KEYS へ昇格を依頼する） */
-export const BIN_MEMO_DRAFT_KEY = 'sb.v2.memo';
+import { reevaluateAlerts, resolveShiwakeCode } from './build';
 
 export const BIN_MEMO_TAG = 'bin-memo';
 export const BIN_MEMO_HISTORY_MAX = 20;
@@ -38,25 +39,31 @@ function sanitize(raw: unknown): ShiwakeState | null {
 }
 
 /**
- * 保存済み state を読む。無ければ v1（sb_*）から初回取込する。
- * @returns state と、v1 から取り込んだかどうか
+ * 仕分番長ドメインの補完。
+ *
+ * migrate.ts は「v1 の値をそのまま v2 の器へ移す」だけなので、
+ * 仕分番長固有の派生値（明細コード → JAN の解決、要注意ワード判定、
+ * ラベル未設定の明細名）はここで整える。冪等なので毎回の読み込みで通してよい。
  */
-export function loadShiwakeState(): { state: ShiwakeState; importedFromV1: boolean } {
-  const existing = sanitize(readJson<unknown>(KEYS.shiwake));
-  if (existing) return { state: existing, importedFromV1: false };
+function normalize(state: ShiwakeState): ShiwakeState {
+  const alertWords = [...new Set(state.alertWords.filter((w) => typeof w === 'string' && w !== ''))];
 
-  const legacy = readLegacyShiwakeState();
-  if (legacy) {
-    writeJson(KEYS.shiwake, legacy);
-    const meta: MetaV2 = {
-      schemaVersion: 2,
-      migratedAt: nowIso(),
-      migratedFrom: ['sb_items', 'sb_carts', 'sb_alert_words'],
-    };
-    writeJson(KEYS.shiwakeMeta, meta);
-    return { state: legacy, importedFromV1: true };
-  }
-  return { state: emptyShiwakeState(), importedFromV1: false };
+  const items: ShiwakeItem[] = state.items
+    .filter((i): i is ShiwakeItem => Boolean(i && i.name))
+    .map((i) => (i.jan ? i : { ...i, jan: resolveShiwakeCode(i.code).jan }));
+
+  const carts = state.carts.map((c, i) => ({
+    ...c,
+    label: c.label || `明細${i + 1}`,
+  }));
+
+  return { ...state, items: reevaluateAlerts(items, alertWords), carts, alertWords };
+}
+
+/** 保存済み state を読む（v1 取込は起動時の migrate が済ませている） */
+export function loadShiwakeState(): ShiwakeState {
+  const existing = sanitize(readJson<unknown>(KEYS.shiwake));
+  return existing ? normalize(existing) : emptyShiwakeState();
 }
 
 export function saveShiwakeState(state: ShiwakeState): boolean {
@@ -82,13 +89,11 @@ export function loadCustomerOrders(): CustomerOrder[] {
 // ---------------------------------------------------------------- 便メモ
 
 export function loadBinMemoDraft(): string {
-  const v2 = readJson<string>(BIN_MEMO_DRAFT_KEY);
-  if (typeof v2 === 'string') return v2;
-  return readLegacyBinMemo();
+  return getCollection('shiwakeMemoDraft');
 }
 
 export function saveBinMemoDraft(text: string): boolean {
-  return writeJson(BIN_MEMO_DRAFT_KEY, text);
+  return setCollection('shiwakeMemoDraft', text);
 }
 
 function loadNotes(): Note[] {
@@ -96,23 +101,11 @@ function loadNotes(): Note[] {
   return Array.isArray(raw) ? raw : [];
 }
 
-/** 便メモ履歴（新しい順） */
+/** 便メモ履歴（新しい順）。v1 の sb_memo_history は migrate が Note へ変換済み */
 export function loadBinMemoHistory(): Note[] {
-  const notes = loadNotes().filter((n) => n?.tag === BIN_MEMO_TAG);
-  if (notes.length) {
-    return [...notes].sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
-  }
-  // v2 に履歴が無ければ v1 の sb_memo_history を表示用に読み込む（書き戻しはしない）
-  return readLegacyMemoHistory().map((e, i) => ({
-    id: `legacy-memo-${i}`,
-    createdAt: '',
-    updatedAt: '',
-    title: e.date,
-    text: e.text,
-    color: NOTE_COLORS[0],
-    pinned: false,
-    tag: BIN_MEMO_TAG,
-  }));
+  return loadNotes()
+    .filter((n) => n?.tag === BIN_MEMO_TAG)
+    .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
 }
 
 function newId(): string {

@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { nowIso, todayLocal } from '@core/datetime';
+import { lastMigrationReport } from '@core/migrate';
 import type { CustomerOrder, Note, Product, ShiwakeItem, ShiwakeState } from '@core/types';
 import './shiwake.css';
 
@@ -101,14 +102,19 @@ export function ShiwakeApp() {
     setPersisted(isPersisted());
     setShowKeyScreen(!key);
 
-    const { state: loaded, importedFromV1 } = loadShiwakeState();
+    const loaded = loadShiwakeState();
     setState(loaded);
     setProducts(loadProducts());
     setCustOrders(loadCustomerOrders());
     setMemoDraft(loadBinMemoDraft());
     setMemoHistory(loadBinMemoHistory());
-    if (importedFromV1) {
+
+    // 移行本体は main.tsx の bootMigration() が描画前に済ませている（ここは通知のみ）
+    const migration = lastMigrationReport();
+    if (migration?.ran) {
       setToast({ message: `旧バージョンのデータを引き継ぎました（${loaded.items.length}商品）` });
+    } else if (migration && migration.errors.length > 0) {
+      setToast({ message: 'データの引き継ぎに失敗しました（端末の空き容量をご確認ください）' });
     }
   }, []);
 

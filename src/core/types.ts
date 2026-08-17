@@ -132,7 +132,17 @@ export interface Note extends Entity {
   remindAt?: ISODateTime;
   /** リマインダー発火済み日時 */
   firedAt?: ISODateTime;
-  /** 'bin-memo' = 仕分番長の便メモ由来 */
+  /**
+   * 由来・用途の分類ラベル（自由文字列）。
+   *
+   * 現在使われている値:
+   * - `'bin-memo'` … 仕分番長の便メモ（履歴一覧はこのタグで絞り込む）
+   * - `undefined`  … 本体のノート（既定）
+   *
+   * 将来タグを増やすときも **union 型には固定しない**（Note は本体・仕分番長の
+   * 両方から書かれるため、片側だけを更新しても壊れない緩い契約にしておく）。
+   * 未知のタグは「ノート一覧に出す・便メモ履歴には出さない」で扱うこと。
+   */
   tag?: string;
 }
 
@@ -157,6 +167,8 @@ export interface OrderList extends Entity {
 
 export interface ShiwakeItem {
   id: string;
+  /** v1（sb_items）由来の旧ID。バックアップ往復の重複判定用（現状は未使用） */
+  _legacyId?: string;
   name: string;
   /** 明細上の生コード（ITF-14等）。null 相当は '' */
   code: string;
@@ -248,6 +260,7 @@ export const KEYS = {
   orders: 'tb.v2.orders', // OrderList[]
   shiwake: 'sb.v2.state', // ShiwakeState
   shiwakeMeta: 'sb.v2.meta', // MetaV2
+  shiwakeMemoDraft: 'sb.v2.memo', // string（便メモの下書き。確定分は notes へ tag:'bin-memo' で積む）
   shareRecv: 'tb.share.v2', // share ビューの受信キャッシュ ScanItem[]
 } as const;
 
