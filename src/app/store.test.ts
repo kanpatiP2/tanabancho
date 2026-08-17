@@ -18,9 +18,11 @@ import {
   orderLists,
   products,
   removeOrderLine,
+  resetExportedBatches,
   restoreScan,
   restoreScans,
   scans,
+  setBatchExported,
   settings,
   stamp,
   updateScan,
@@ -175,6 +177,59 @@ describe('発注リスト', () => {
     bumpOrderLine(list.id, '111', 3);
     removeOrderLine(list.id, '111');
     expect(orderLists.value.find((o) => o.id === list.id)!.lines).toEqual([]);
+  });
+});
+
+describe('QR出力のバッチ読取済', () => {
+  const batchesOf = (id: string) => orderLists.value.find((o) => o.id === id)!.exportedBatches;
+
+  test('マークの付け外しができ、番号は昇順に保たれる', () => {
+    const list = ensureActiveOrderList('2026-08-17');
+    setBatchExported(list.id, 2, true);
+    setBatchExported(list.id, 0, true);
+    expect(batchesOf(list.id)).toEqual([0, 2]);
+
+    setBatchExported(list.id, 0, false);
+    expect(batchesOf(list.id)).toEqual([2]);
+  });
+
+  test('同じマークを二重に付けても重複しない', () => {
+    const list = ensureActiveOrderList('2026-08-17');
+    setBatchExported(list.id, 1, true);
+    setBatchExported(list.id, 1, true);
+    expect(batchesOf(list.id)).toEqual([1]);
+  });
+
+  test('付いていないマークを外しても落ちない', () => {
+    const list = ensureActiveOrderList('2026-08-17');
+    setBatchExported(list.id, 3, false);
+    expect(batchesOf(list.id)).toEqual([]);
+  });
+
+  test('不正な番号・存在しないリストは無視する', () => {
+    const list = ensureActiveOrderList('2026-08-17');
+    setBatchExported(list.id, -1, true);
+    setBatchExported(list.id, 1.5, true);
+    setBatchExported('no-such-list', 0, true);
+    expect(batchesOf(list.id)).toEqual([]);
+  });
+
+  test('リセットは外した件数を返す（何もなければ 0）', () => {
+    const list = ensureActiveOrderList('2026-08-17');
+    setBatchExported(list.id, 0, true);
+    setBatchExported(list.id, 1, true);
+    expect(resetExportedBatches(list.id)).toBe(2);
+    expect(batchesOf(list.id)).toEqual([]);
+    expect(resetExportedBatches(list.id)).toBe(0);
+  });
+
+  test('永続化される（読み直しても残る）', () => {
+    const list = ensureActiveOrderList('2026-08-17');
+    bumpOrderLine(list.id, '111', 1);
+    setBatchExported(list.id, 0, true);
+    __resetStoreForTest();
+    loadAll();
+    expect(batchesOf(list.id)).toEqual([0]);
   });
 });
 

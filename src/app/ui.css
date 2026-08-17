@@ -1077,3 +1077,158 @@ hr.sep {
   text-align: left;
   cursor: pointer;
 }
+
+/* ---------------------------------------------------------------- 全画面ビュー（QR出力） */
+
+.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 66; /* シート(60) / バーコード拡大(65) より前、トースト(70) より後ろ */
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/*
+  QR出力面は「2Dスキャナに読み取らせる対象」なので、テーマに追従させず常に白地・黒印字にする。
+  ARCHITECTURE.md の「色リテラル禁止」に対する明示的な例外はこのブロックだけ。
+  配下の共通部品（btn / chip / badge）は今まで通りトークン変数を参照し、
+  ここでトークンをライト固定へ上書きすることで画面全体を白基調に揃える。
+*/
+.fullscreen--paper {
+  --qr-paper: #ffffff;
+  --qr-ink: #000000;
+
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f4f2ef;
+  --border: #dcd8d2;
+  --text: #262422;
+  --text-sub: #6f6a63;
+  --teal: #0f766e;
+  --teal-soft: #d6ebe9;
+  --red: #b91c1c;
+  --red-soft: #fbe4e4;
+  --amber: #b45309;
+  --amber-soft: #fdeecd;
+  --blue: #1d4ed8;
+  --blue-soft: #dde7fb;
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+
+  background: var(--qr-paper);
+  color: var(--qr-ink);
+}
+
+.fullscreen__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.fullscreen__title {
+  flex: 1;
+  font-weight: 700;
+}
+
+.fullscreen__body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 10px;
+}
+
+/* 「⋯」メニューなど、全画面ビューの上に重ねるシート */
+.sheet-backdrop--top {
+  z-index: 68;
+}
+
+/* ---------------------------------------------------------------- QR */
+
+.qrnote {
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: var(--font-sub);
+  line-height: 1.5;
+}
+
+/*
+  QR の外周。静寂域（quiet zone）は viewBox 内に 4 モジュール分含めてあるが、
+  指や画面端で削られないよう、さらに外側にも白の余白を確保する。
+*/
+.qrframe {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  background: var(--qr-paper);
+  border-radius: var(--radius);
+}
+
+.qrsvg {
+  display: block;
+  width: 100%;
+  max-width: min(88vw, 420px);
+  height: auto;
+  aspect-ratio: 1 / 1;
+  /* セル境界のアンチエイリアスは svg 側の shape-rendering="crispEdges" で切ってある。
+     viewBox がモジュール数そのものなので、拡大しても量子化ズレは出ない。 */
+}
+
+.qrerror {
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--red);
+  border-radius: var(--radius);
+  color: var(--red);
+  font-size: var(--font-sub);
+}
+
+.qrmeta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: var(--font-body);
+}
+
+.qrdots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.qrdot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.qrdot[data-on='true'] {
+  background: var(--teal);
+  border-color: var(--teal);
+}
+
+.qrdot[data-current='true'] {
+  outline: 2px solid var(--text-sub);
+  outline-offset: 1px;
+}
+
+.qrsettings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

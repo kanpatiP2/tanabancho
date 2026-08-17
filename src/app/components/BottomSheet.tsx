@@ -10,9 +10,14 @@ interface SheetProps {
   onClose: () => void;
   children: ComponentChildren;
   footer?: ComponentChildren;
+  /**
+   * 'top' にすると全画面ビュー（.fullscreen）より前面に出す。
+   * QR出力画面の「⋯」メニューのように、全画面の上に重ねるシート専用。
+   */
+  layer?: 'default' | 'top';
 }
 
-export function BottomSheet({ open, title, onClose, children, footer }: SheetProps) {
+export function BottomSheet({ open, title, onClose, children, footer, layer }: SheetProps) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -25,7 +30,7 @@ export function BottomSheet({ open, title, onClose, children, footer }: SheetPro
   if (!open) return null;
   return (
     <div
-      class="sheet-backdrop"
+      class={layer === 'top' ? 'sheet-backdrop sheet-backdrop--top' : 'sheet-backdrop'}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

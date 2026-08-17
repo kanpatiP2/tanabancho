@@ -444,6 +444,37 @@ export function deleteOrderList(id: string): void {
   commitOrderLists(orderLists.value.filter((o) => o.id !== id));
 }
 
+/**
+ * QR出力のバッチ読取済マーク（OrderList.exportedBatches）。
+ * 番号は「現在のバッチサイズでの 0 起点の連番」なので、
+ * バッチサイズを変えたときは resetExportedBatches で捨てる。
+ */
+export function setBatchExported(listId: string, batchIndex: number, exported: boolean): void {
+  if (!Number.isInteger(batchIndex) || batchIndex < 0) return;
+  commitOrderLists(
+    orderLists.value.map((o) => {
+      if (o.id !== listId) return o;
+      const has = o.exportedBatches.includes(batchIndex);
+      if (has === exported) return o;
+      const exportedBatches = exported
+        ? [...o.exportedBatches, batchIndex].sort((a, b) => a - b)
+        : o.exportedBatches.filter((n) => n !== batchIndex);
+      return { ...o, exportedBatches, updatedAt: nowIso() };
+    }),
+  );
+}
+
+/** 読取済マークを全部外す。戻り値は外したマークの数（0 なら何もしていない） */
+export function resetExportedBatches(listId: string): number {
+  const target = orderLists.value.find((o) => o.id === listId);
+  const cleared = target?.exportedBatches.length ?? 0;
+  if (!cleared) return 0;
+  commitOrderLists(
+    orderLists.value.map((o) => (o.id === listId ? { ...o, exportedBatches: [], updatedAt: nowIso() } : o)),
+  );
+  return cleared;
+}
+
 // ---------------------------------------------------------------- ストレージ計測
 
 export interface StorageSlice {

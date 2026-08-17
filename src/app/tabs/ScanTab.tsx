@@ -5,7 +5,8 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { CodeSource, ResolvedCode, ScanIntent } from '@core/types';
 import { todayLocal } from '@core/datetime';
-import { Card, Check, Empty, Field, JanText } from '../components/primitives';
+import { isFullyExported, toJanLines } from '@order-export/payload';
+import { Badge, Card, Check, Empty, Field, JanText } from '../components/primitives';
 import { toast, toastUndo } from '../components/Toast';
 import { ExpiryPad } from '../scan/ExpiryPad';
 import { PopPanel } from '../scan/PopPanel';
@@ -208,7 +209,14 @@ export function ScanTab() {
         <Card title="発注モード">
           <p>
             現在のリスト: <strong>{activeOrder?.label ?? '未作成'}</strong> /{' '}
-            <strong>{activeOrder?.lines.length ?? 0}件</strong>
+            <strong>{activeOrder?.lines.length ?? 0}件</strong>{' '}
+            {isFullyExported(
+              activeOrder?.exportedBatches,
+              toJanLines(activeOrder).length,
+              settings.value.qrBatchSize,
+            ) ? (
+              <Badge tone="teal">出力済</Badge>
+            ) : null}
           </p>
           <button
             type="button"
