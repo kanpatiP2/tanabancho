@@ -5,3 +5,6 @@ dev-dist/
 
 # 実データ（個人情報・APIキーを含む）— 絶対にコミットしない
 test-fixtures-local/
+
+# ローカル設定・worktree
+.claude/
