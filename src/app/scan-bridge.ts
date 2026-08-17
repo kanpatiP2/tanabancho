@@ -19,7 +19,8 @@ import {
   type ScanEvent,
 } from '@scanner/session';
 import { startWedgeListener } from '@scanner/wedge';
-import { boxJanLookup, products, settings } from './store';
+import { lookupJan, startLookupAutoFlush } from '@lookup/index';
+import { boxJanLookup, learnProduct, products, settings } from './store';
 
 export const VIDEO_CONTAINER_ID = 'tb-camera';
 
@@ -195,9 +196,30 @@ export function feedback(ok: boolean): void {
 }
 
 /**
- * 外部JAN照会のフック。P3 の `src/lookup/` が入ったらここを差し替える。
- * 現状は常に null（未登録のまま）を返す。
+ * 外部JAN照会のフック（`@lookup` への唯一の入口）。
+ *
+ * 失敗・オフライン・未ヒットはすべて null。呼び出し側（scan/draft.ts）は
+ * 「名前が取れたときだけ辞書へ ext として学習する」ことだけ考えればよい。
+ * オフライン時は `@lookup` 側でキューに積まれ、`attachLookupFlush()` が拾い直す。
  */
-export async function lookupUnknownJan(_jan: string): Promise<{ name: string } | null> {
-  return null;
+export async function lookupUnknownJan(jan: string): Promise<{ name: string } | null> {
+  if (!jan) return null;
+  try {
+    const hit = await lookupJan(jan);
+    return hit && hit.name ? { name: hit.name } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * オンライン復帰時に照会キューを流す。戻り値は解除関数（App が useEffect で使う）。
+ * ヒットした名前は ext として辞書に積む（既存の manual/gemini は上書きしない）。
+ */
+export function attachLookupFlush(): () => void {
+  return startLookupAutoFlush((hits) => {
+    for (const h of hits) {
+      if (h.name) learnProduct(h.jan, { name: h.name, nameSource: 'ext' });
+    }
+  });
 }

@@ -233,6 +233,29 @@ export function SettingsPanel() {
           </Field>
         </div>
       </Card>
+
+      <Card title="外部JAN照会">
+        <p class="muted">
+          辞書に無いJANをスキャンしたとき、外部の公開商品DBへ問い合わせて商品名を補完します。
+          Open Food Facts（食品・登録不要）は常に有効です。
+        </p>
+        <Field label="JANCODE LOOKUP appId（任意）">
+          <input
+            class="input"
+            type="text"
+            inputMode="text"
+            autocomplete="off"
+            placeholder="未設定なら Open Food Facts のみ"
+            value={s.janLookupAppId}
+            onInput={(e) =>
+              updateSettings({ janLookupAppId: (e.currentTarget as HTMLInputElement).value.trim() })
+            }
+          />
+        </Field>
+        <p class="muted">
+          ※ JANCODE LOOKUP は現在サービス停止中のため、appId を入れても応答しない場合があります。
+        </p>
+      </Card>
     </>
   );
 }

@@ -49,4 +49,5 @@ export const DEFAULT_SETTINGS: Settings = {
   historySort: 'newest',
   custSort: 'arrival',
   lastBackupAt: '',
+  janLookupAppId: '',
 };
