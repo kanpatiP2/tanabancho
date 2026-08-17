@@ -17,35 +17,42 @@ import {
   attachWedge,
   cameraError,
   cameraState,
+  cancelPendingExpiry,
   dispatchCode,
   feedback,
+  flushPendingExpiry,
+  pendingExpiry,
   probeCamera,
   restartCamera,
   scanIntent,
   setCodeHandler,
+  setDuplicateHandler,
+  setExpiryCommitHandler,
   setScanIntent,
   stopCamera,
   toggleCamera,
 } from '../scan-bridge';
 import {
   addCompCheckToHistory,
-  addToOrder,
   applyExpiry,
   captureDraft,
   compPending,
   ensureOrderList,
   flash,
   patchCapture,
-  popDraft,
-  registerScan,
   suggestExpiryFor,
   toggleCaptureOrder,
 } from '../scan/draft';
 import {
+  handleDuplicate,
+  handleExpiryCommit,
+  handleScannedCode,
+  type ScanUiHooks,
+} from '../scan/handlers';
+import {
   competitors,
   deleteScan,
   orderLists,
-  products,
   profile,
   restoreScan,
   settings,
@@ -69,78 +76,47 @@ export function ScanTab() {
 
   const mode = scanIntent.value;
 
-  // ---- コード受け口。モードごとに処理を分ける（scan-bridge 経由で camera/wedge/手入力が集約される）
-  useEffect(() => {
-    const handle = (resolved: ResolvedCode, _source: CodeSource) => {
-      switch (scanIntent.value) {
-        case 'expiry': {
-          const suggestion = suggestExpiryFor(resolved.jan);
-          const item = registerScan(resolved, {
-            expiry: autoExpiry && suggestion ? suggestion : '',
-          });
-          if (!item) {
-            feedback(false);
-            toast('リストに存在するコードです', { tone: 'warn' });
-            return;
-          }
-          feedback(true);
-          if (autoExpiry && suggestion) {
-            toast(`提案値 ${suggestion} で登録しました`, {
-              tone: 'ok',
+  // ---- intent 別の処理は scan/handlers.ts。ここは UI 副作用（トースト・パッド・触覚）だけ渡す
+  const ui: ScanUiHooks = {
+    intent: () => scanIntent.value,
+    autoExpiry: () => autoExpiry,
+    feedback,
+    openExpiryPad: setPadTarget,
+    notify: (n) =>
+      toast(n.message, {
+        tone: n.tone,
+        ...(n.revise
+          ? {
               action: {
-                label: '変更',
-                onAct: () => setPadTarget({ scanId: item.id, jan: item.jan, name: item.name }),
+                label: '今すぐ変更',
+                onAct: () => {
+                  cancelPendingExpiry(); // 自動確定を止めて手入力に切り替える
+                  setPadTarget(n.revise!);
+                },
               },
-            });
-          } else {
-            setPadTarget({ scanId: item.id, jan: item.jan, name: item.name });
-          }
-          return;
-        }
-        case 'pop': {
-          const item = registerScan(resolved, { pop: popDraft.value });
-          if (!item) {
-            feedback(false);
-            toast('リストに存在するコードです', { tone: 'warn' });
-            return;
-          }
-          feedback(true);
-          toast(`POP付きで登録: ${item.jan}`, { tone: 'ok' });
-          return;
-        }
-        case 'order': {
-          addToOrder(resolved.jan, 1);
-          feedback(true);
-          toast(`発注リストに追加: ${resolved.jan}`, { tone: 'ok' });
-          return;
-        }
-        case 'compCheck': {
-          const match = competitors.value.find((c) => c.jan === resolved.jan);
-          const name = match?.name || products.value[resolved.jan]?.name || '';
-          compPending.value = {
-            jan: resolved.jan,
-            name: name || '商品名不明',
-            matched: Boolean(match),
-            compId: match?.id ?? '',
-          };
-          feedback(true);
-          return;
-        }
-        default: {
-          const item = registerScan(resolved);
-          if (!item) {
-            feedback(false);
-            toast('リストに存在するコードです', { tone: 'warn' });
-            return;
-          }
-          feedback(true);
-          return;
-        }
-      }
+            }
+          : {}),
+      }),
+  };
+
+  // ---- コード受け口（scan-bridge 経由で camera/wedge/手入力が集約される）
+  useEffect(() => {
+    setCodeHandler((resolved: ResolvedCode, _source: CodeSource) => handleScannedCode(resolved, ui));
+    setDuplicateHandler((resolved) => handleDuplicate(resolved, ui));
+    return () => {
+      setCodeHandler(null);
+      setDuplicateHandler(null);
     };
-    setCodeHandler(handle);
-    return () => setCodeHandler(null);
   }, [autoExpiry]);
+
+  // ---- 期限モードの「次スキャンで自動確定」。モード離脱・画面離脱でも取りこぼさない
+  useEffect(() => {
+    setExpiryCommitHandler((p) => handleExpiryCommit(p, ui));
+    return () => {
+      flushPendingExpiry(); // ハンドラを外す前に確定させる
+      setExpiryCommitHandler(null);
+    };
+  }, []);
 
   // ---- ウェッジ（settings.inputSource === 'wedge' のとき有効）。カメラとは排他
   useEffect(() => {
@@ -198,6 +174,19 @@ export function ScanTab() {
             checked={autoExpiry}
             onChange={setAutoExpiry}
           />
+          {pendingExpiry.value ? (
+            <div class="row" style={{ marginTop: '8px' }}>
+              <span class="grow muted">
+                確定待ち: <JanText jan={pendingExpiry.value.jan} /> → {pendingExpiry.value.expiry}
+              </span>
+              <button type="button" class="btn btn--sm" onClick={flushPendingExpiry}>
+                今すぐ確定
+              </button>
+              <button type="button" class="btn btn--sm btn--ghost" onClick={cancelPendingExpiry}>
+                取消
+              </button>
+            </div>
+          ) : null}
         </Card>
       ) : null}
       {mode === 'pop' ? (
@@ -237,6 +226,7 @@ export function ScanTab() {
         onClose={() => setSearchOpen(false)}
         onPick={(code) => {
           setSearchOpen(false);
+          // 重複は setDuplicateHandler が通知するので、ここでは解釈できない入力だけ拾う
           if (!dispatchCode(code, 'manual')) {
             toast('コードとして解釈できません', { tone: 'warn' });
           }

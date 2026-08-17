@@ -7,6 +7,7 @@ import type { Competitor, CompetitorReason, ReturnItem } from '@core/types';
 import { Badge, Card, Empty, Field, JanText } from '../components/primitives';
 import { ConfirmSheet } from '../components/BottomSheet';
 import { toast } from '../components/Toast';
+import { requestFieldScan, useFieldScan } from '../scan/field-scan';
 import {
   addCompetitor,
   addReturn,
@@ -27,17 +28,38 @@ export function Returns() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const today = todayLocal();
 
+  // v1 の activeSideScanType='return' 相当。返品伝票の JAN は生コードのまま入れる
+  useFieldScan('returnJan', (jan) => setDraft({ ...draft, jan }));
+
   return (
     <>
       <Card title="返品を登録">
         <div class="stack">
           <Field label="JAN">
-            <input
-              class="input mono"
-              inputMode="numeric"
-              value={draft.jan}
-              onInput={(e) => setDraft({ ...draft, jan: (e.currentTarget as HTMLInputElement).value })}
-            />
+            <div class="row row--tight">
+              <input
+                class="input mono grow"
+                inputMode="numeric"
+                value={draft.jan}
+                onInput={(e) => setDraft({ ...draft, jan: (e.currentTarget as HTMLInputElement).value })}
+              />
+              <button
+                type="button"
+                class="btn btn--sm btn--icon"
+                title="JANをスキャンで入力"
+                aria-label="JANをスキャンで入力"
+                onClick={() =>
+                  requestFieldScan({
+                    kind: 'returnJan',
+                    label: '返品のJAN',
+                    convertItf: false,
+                    applyBoxJanLookup: false,
+                  })
+                }
+              >
+                📷
+              </button>
+            </div>
           </Field>
           <div class="row">
             <Field label="受付開始" style={{ flex: '1' }}>
@@ -162,6 +184,12 @@ export function Competitors() {
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  // v1 の activeCompScan 相当。ITF-14 変換・箱JAN→バラJAN 置換はどちらも効かせる
+  useFieldScan('compJan', (jan) => {
+    const known = products.value[jan]?.name;
+    setDraft({ ...draft, jan, name: known && !draft.name ? known : draft.name });
+  });
+
   return (
     <>
       <Card title="競合ヘッダーを登録">
@@ -192,16 +220,27 @@ export function Competitors() {
             </Field>
           </div>
           <Field label="JAN">
-            <input
-              class="input mono"
-              inputMode="numeric"
-              value={draft.jan}
-              onInput={(e) => {
-                const jan = (e.currentTarget as HTMLInputElement).value;
-                const known = products.value[jan]?.name;
-                setDraft({ ...draft, jan, name: known && !draft.name ? known : draft.name });
-              }}
-            />
+            <div class="row row--tight">
+              <input
+                class="input mono grow"
+                inputMode="numeric"
+                value={draft.jan}
+                onInput={(e) => {
+                  const jan = (e.currentTarget as HTMLInputElement).value;
+                  const known = products.value[jan]?.name;
+                  setDraft({ ...draft, jan, name: known && !draft.name ? known : draft.name });
+                }}
+              />
+              <button
+                type="button"
+                class="btn btn--sm btn--icon"
+                title="JANをスキャンで入力"
+                aria-label="JANをスキャンで入力"
+                onClick={() => requestFieldScan({ kind: 'compJan', label: '競合商品のJAN' })}
+              >
+                📷
+              </button>
+            </div>
           </Field>
           <Field label="商品名">
             <input

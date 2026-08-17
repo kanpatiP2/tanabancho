@@ -10,6 +10,7 @@ import { attachLookupFlush } from './scan-bridge';
 import { navBadges } from './derived';
 import { ToastHost, toast } from './components/Toast';
 import { MigrationSheet } from './MigrationSheet';
+import { FieldScanSheet } from './scan/FieldScanSheet';
 import { ScanTab } from './tabs/ScanTab';
 import { ListTab } from './tabs/ListTab';
 import { TodayTab } from './tabs/TodayTab';
@@ -112,6 +113,7 @@ export function App() {
       </div>
       <ToastHost />
       <MigrationSheet />
+      <FieldScanSheet />
       <BottomNav />
     </div>
   );

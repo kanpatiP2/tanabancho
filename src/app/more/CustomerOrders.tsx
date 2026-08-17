@@ -9,6 +9,7 @@ import { Badge, Card, Check, Empty, Field, JanText } from '../components/primiti
 import { BottomSheet, ConfirmSheet } from '../components/BottomSheet';
 import { Barcode } from '../components/Barcode';
 import { toast } from '../components/Toast';
+import { requestFieldScan, useFieldScan } from '../scan/field-scan';
 import {
   addCustomerOrder,
   addScan,
@@ -171,7 +172,11 @@ export function CustomerOrders() {
 
               {editId === c.id ? (
                 <div class="histrow__edit" style={{ marginTop: '8px' }}>
-                  <CustFields value={c} onChange={(patch) => updateCustomerOrder(c.id, patch)} />
+                  <CustFields
+                    value={c}
+                    scanKey={c.id}
+                    onChange={(patch) => updateCustomerOrder(c.id, patch)}
+                  />
                 </div>
               ) : null}
             </div>
@@ -194,7 +199,11 @@ export function CustomerOrders() {
           </>
         }
       >
-        <CustFields value={draft} onChange={(patch) => setDraft({ ...draft, ...patch })} />
+        <CustFields
+          value={draft}
+          scanKey="new"
+          onChange={(patch) => setDraft({ ...draft, ...patch })}
+        />
       </BottomSheet>
 
       <BottomSheet
@@ -228,21 +237,46 @@ export function CustomerOrders() {
 
 function CustFields({
   value,
+  scanKey,
   onChange,
 }: {
   value: CustomerOrder;
+  /** 「スキャンで入力」の宛先識別子。新規フォームと行内編集が同時に出るため一意にする */
+  scanKey: string;
   onChange: (patch: Partial<CustomerOrder>) => void;
 }) {
+  // v1 の activeSideScanType='cust' 相当。客注伝票の JAN は生コードのまま入れる
+  const kind = `custJan:${scanKey}`;
+  useFieldScan(kind, (jan) => onChange({ jan }));
+
   return (
     <div class="stack">
       <div class="row">
         <Field label="JAN" style={{ flex: '2' }}>
-          <input
-            class="input mono"
-            inputMode="numeric"
-            value={value.jan}
-            onInput={(e) => onChange({ jan: (e.currentTarget as HTMLInputElement).value })}
-          />
+          <div class="row row--tight">
+            <input
+              class="input mono grow"
+              inputMode="numeric"
+              value={value.jan}
+              onInput={(e) => onChange({ jan: (e.currentTarget as HTMLInputElement).value })}
+            />
+            <button
+              type="button"
+              class="btn btn--sm btn--icon"
+              title="JANをスキャンで入力"
+              aria-label="JANをスキャンで入力"
+              onClick={() =>
+                requestFieldScan({
+                  kind,
+                  label: '客注のJAN',
+                  convertItf: false,
+                  applyBoxJanLookup: false,
+                })
+              }
+            >
+              📷
+            </button>
+          </div>
         </Field>
         <Field label="個数" style={{ flex: '1' }}>
           <input

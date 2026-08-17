@@ -216,15 +216,16 @@ async function resolveNameExternally(scanId: string, jan: string): Promise<void>
   }
 }
 
-/** 期限だけ後から確定する（期限パッド） */
+/** 期限だけ後から確定する（期限パッド / 次スキャンでの自動確定） */
 export function applyExpiry(scanId: string, expiry: string): void {
   const item = scans.value.find((s) => s.id === scanId);
   if (!item) return;
   updateScan(scanId, { expiry });
-  if (expiry) {
-    learnExpiryOffset(item.jan, diffDays(todayLocal(new Date(item.createdAt)), expiry));
-    lastExpiry.value = expiry;
-  }
+  if (!expiry) return;
+  lastExpiry.value = expiry;
+  // 学習無効の行からはオフセットを学ばない（core/dict.learnFromScan と同じ約束）
+  if (item.noLearn) return;
+  learnExpiryOffset(item.jan, diffDays(todayLocal(new Date(item.createdAt)), expiry));
 }
 
 /** 辞書の学習済みオフセットから期限の提案値を出す。無ければ null */

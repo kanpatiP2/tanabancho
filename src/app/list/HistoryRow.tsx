@@ -7,8 +7,9 @@ import type { ScanItem } from '@core/types';
 import { Badge, Check, Field, JanText } from '../components/primitives';
 import { SwipeRow } from '../components/SwipeRow';
 import { PopEditor } from '../scan/PopPanel';
+import { requestFieldScan, useFieldScan } from '../scan/field-scan';
 import { formatPopDetails } from '../merge-image';
-import { profile, updateScan } from '../store';
+import { learnProduct, profile, updateScan } from '../store';
 
 const BARCODE_KIND: Record<string, string> = {
   EAN13: 'JAN13',
@@ -42,6 +43,13 @@ export function HistoryRow({
 }: Props) {
   const expired = Boolean(item.expiry && item.expiry < todayLocal());
   const orderTypes = profile.value.vocab.orderTypes;
+
+  /**
+   * 箱JAN の「スキャンで入力」（v1 の activeBoxJanScanId 相当）。
+   * 箱コード自体を登録するので箱JAN→バラJAN の置換は掛けない（ITF-14 → JAN13 の変換だけ行う）。
+   */
+  const boxScanKind = `boxJan:${item.id}`;
+  useFieldScan(boxScanKind, (jan) => setBoxJan(item, jan));
 
   return (
     <li class="histrow" data-expired={String(expired)} data-selected={String(selected)}>
@@ -175,12 +183,34 @@ export function HistoryRow({
 
           <div class="row">
             <Field label="箱JAN" style={{ flex: '1' }}>
-              <input
-                class="input mono"
-                inputMode="numeric"
-                value={item.boxJan}
-                onInput={(e) => updateScan(item.id, { boxJan: (e.currentTarget as HTMLInputElement).value })}
-              />
+              <div class="row row--tight">
+                <input
+                  class="input mono grow"
+                  inputMode="numeric"
+                  value={item.boxJan}
+                  onInput={(e) =>
+                    updateScan(item.id, { boxJan: (e.currentTarget as HTMLInputElement).value })
+                  }
+                  // 確定時に辞書へ学習させる（次から箱コードでバラJANが引ける）
+                  onChange={(e) => setBoxJan(item, (e.currentTarget as HTMLInputElement).value)}
+                />
+                <button
+                  type="button"
+                  class="btn btn--sm btn--icon"
+                  title="箱JANをスキャンで入力"
+                  aria-label="箱JANをスキャンで入力"
+                  onClick={() =>
+                    requestFieldScan({
+                      kind: boxScanKind,
+                      label: '箱JAN',
+                      id: item.id,
+                      applyBoxJanLookup: false,
+                    })
+                  }
+                >
+                  📷
+                </button>
+              </div>
             </Field>
             <Field label="期限" style={{ flex: '1' }}>
               <input
@@ -221,6 +251,16 @@ export function HistoryRow({
       ) : null}
     </li>
   );
+}
+
+/**
+ * 箱JAN を履歴行に書き、学習辞書へも紐付ける。
+ * 辞書に入って初めて `store.boxJanLookup` が効き、次回から箱コードでバラJANが登録される。
+ */
+function setBoxJan(item: ScanItem, boxJan: string): void {
+  const code = boxJan.trim();
+  updateScan(item.id, { boxJan: code });
+  if (code && item.jan && !item.noLearn) learnProduct(item.jan, { boxJan: code });
 }
 
 /** ISO → <input type="datetime-local"> 用のローカル文字列 */

@@ -119,7 +119,9 @@ export function resolveCode(
   }
 
   if (boxJanLookup) {
-    const linked = boxJanLookup(jan);
+    // 学習済みの箱JAN は「ITF-14 を JAN13 に変換した値」（本体で登録した場合）と
+    // 「明細の生 ITF-14」（仕分番長の還流）の2通りがある。両方で引けるようにする。
+    const linked = boxJanLookup(jan) ?? (digits && digits !== jan ? boxJanLookup(digits) : null);
     if (linked && linked !== jan) {
       jan = linked;
       fromBoxJan = true;
