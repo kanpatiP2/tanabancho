@@ -6,6 +6,7 @@ import { signal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import './ui.css';
 import { loadAll, settings, setStorageErrorHandler } from './store';
+import { attachLookupFlush } from './scan-bridge';
 import { navBadges } from './derived';
 import { ToastHost, toast } from './components/Toast';
 import { MigrationSheet } from './MigrationSheet';
@@ -88,7 +89,12 @@ export function App() {
   useEffect(() => {
     loadAll();
     setStorageErrorHandler((msg) => toast(msg, { tone: 'error' }));
-    return () => setStorageErrorHandler(null);
+    // オフライン中に取りこぼした外部JAN照会を、電波復帰時に拾い直す
+    const detachLookup = attachLookupFlush();
+    return () => {
+      setStorageErrorHandler(null);
+      detachLookup();
+    };
   }, []);
 
   useEffect(() => {

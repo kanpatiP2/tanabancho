@@ -6,6 +6,7 @@ import { computed, signal } from '@preact/signals';
 import { addDays, diffDays, nowIso, todayLocal } from '@core/datetime';
 import { suggestExpiryOffset } from '@core/dict';
 import type { PopDetail, PopEnlarge, ResolvedCode, ScanItem } from '@core/types';
+import { lookupUnknownJan } from '../scan-bridge';
 import {
   addScan,
   bumpOrderLine,
@@ -170,7 +171,49 @@ export function registerScan(resolved: ResolvedCode, opts: RegisterOptions = {})
     at: nowIso(),
   };
   resetCaptureAfterRegister();
+
+  // 名前が分からないときだけ外部DBへ投げる（登録自体は待たせない）
+  if (!name && externalLookupEnabled()) void resolveNameExternally(item.id, resolved.jan);
+
   return item;
+}
+
+/**
+ * 外部照会を走らせてよい環境か。ブラウザでだけ有効にする。
+ * 後追いで UI を書き換えるのが目的の機能なので、UI が無い環境
+ * （Node のユニットテスト等）で勝手にネットワークへ出ないようにする。
+ */
+function externalLookupEnabled(): boolean {
+  return typeof window !== 'undefined';
+}
+
+/**
+ * 未知JANの外部照会。スキャン登録の裏で走らせ、取れたら後追いで反映する。
+ *
+ * 反映先は3つ。いずれも「ユーザーが既に入れた値は壊さない」ことを守る:
+ *   1. 学習辞書 … nameSource 'ext'（core/dict.mergeProduct が manual/gemini を守る）
+ *   2. 履歴の該当行 … 名前がまだ空のときだけ埋める
+ *   3. 結果フラッシュカード … 表示中がその件のままのときだけ差し替える
+ */
+async function resolveNameExternally(scanId: string, jan: string): Promise<void> {
+  let hit: { name: string } | null = null;
+  try {
+    hit = await lookupUnknownJan(jan);
+  } catch {
+    return; // 照会失敗は黙って諦める（キュー投入は @lookup 側の責務）
+  }
+  const name = hit?.name.trim();
+  if (!name) return;
+
+  learnProduct(jan, { name, nameSource: 'ext' });
+
+  const current = scans.value.find((s) => s.id === scanId);
+  if (current && !current.name.trim()) updateScan(scanId, { name });
+
+  const f = flash.value;
+  if (f && f.scanId === scanId && !f.name) {
+    flash.value = { ...f, name, known: true };
+  }
 }
 
 /** 期限だけ後から確定する（期限パッド） */

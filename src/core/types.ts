@@ -237,6 +237,8 @@ export interface Settings {
   historySort: 'newest' | 'oldest' | 'genre' | 'name';
   custSort: 'arrival' | 'delivery';
   lastBackupAt: ISODateTime | '';
+  /** 外部JAN照会（JANCODE LOOKUP）の appId。'' なら同プロバイダを使わない */
+  janLookupAppId: string;
 }
 
 export interface MetaV2 {
